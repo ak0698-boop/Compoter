@@ -103,6 +103,7 @@
   /* SERVICES */
   .services-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px;}
   .service-tile{
+    display:block;
     background:var(--paper-raised); border:1px solid var(--line); border-radius:14px; padding:24px;
     transition:transform .2s, box-shadow .2s;
   }
@@ -112,7 +113,11 @@
   }
   .service-tile .icon-badge svg{width:22px; height:22px; stroke:var(--indigo);}
   .service-tile h3{font-size:15.5px; margin-bottom:6px;}
-  .service-tile p{font-size:13px; color:var(--steel);}
+  .service-tile p{font-size:13px; color:var(--steel); margin-bottom:14px;}
+  .service-tile .price-row{display:flex; align-items:center; justify-content:space-between; padding-top:14px; border-top:1px solid var(--line);}
+  .service-tile .price{font-family:var(--display); font-weight:700; font-size:15px; color:var(--indigo);}
+  .service-tile .price span{font-family:var(--mono); font-size:10.5px; font-weight:500; color:var(--steel-light); text-transform:uppercase; display:block; margin-bottom:2px;}
+  .service-tile .book-link{font-size:12.5px; font-weight:600; color:var(--teal);}
 
   /* DUAL CTA */
   .dual-cta{display:grid; grid-template-columns:1fr 1fr; gap:24px;}
@@ -227,56 +232,66 @@
       <p>From a single broken laptop to a full office network — book it here.</p>
     </div>
     <div class="services-grid">
-      <div class="service-tile">
+      <a href="booking.html?service=Computer" class="service-tile">
         <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="14" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="0.5"/><path d="M12 2 V5 M12 19 V22 M2 12 H5 M19 12 H22"/></svg></div>
         <h3>Computer &amp; Laptop Repair</h3>
         <p>Hardware faults, slow performance, virus removal.</p>
-      </div>
-      <div class="service-tile">
+        <div class="price-row"><div class="price"><span>Starting at</span>₹599</div><div class="book-link">Book →</div></div>
+      </a>
+      <a href="booking.html?service=Printer" class="service-tile">
         <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="16" height="10" rx="1.5"/><path d="M8 20 H16 M12 16 V20"/></svg></div>
         <h3>Printer Repair</h3>
         <p>Setup, jams, driver issues, network printing.</p>
-      </div>
-      <div class="service-tile">
+        <div class="price-row"><div class="price"><span>Starting at</span>₹599</div><div class="book-link">Book →</div></div>
+      </a>
+      <a href="booking.html?service=CCTV" class="service-tile">
         <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="13" height="9" rx="1.5"/><path d="M16 10 L21 7 V16 L16 13"/></svg></div>
         <h3>CCTV Installation</h3>
         <p>Camera setup, DVR configuration, remote viewing.</p>
-      </div>
-      <div class="service-tile">
+        <div class="price-row"><div class="price"><span>Per camera</span>₹499</div><div class="book-link">Book →</div></div>
+      </a>
+      <a href="booking.html?service=Networking" class="service-tile">
         <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.2"/><circle cx="18" cy="6" r="2.2"/><circle cx="12" cy="18" r="2.2"/><path d="M7.5 7.5 L11 16.5 M16.5 7.5 L13 16.5 M8 6 H16"/></svg></div>
         <h3>Networking &amp; WiFi</h3>
         <p>Router setup, WiFi dead zones, cabling.</p>
-      </div>
-      <div class="service-tile">
+        <div class="price-row"><div class="price"><span>Starting at</span>₹799</div><div class="book-link">Book →</div></div>
+      </a>
+      <a href="booking.html?service=Server" class="service-tile">
         <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="6" rx="1"/><rect x="4" y="14" width="16" height="6" rx="1"/><circle cx="8" cy="7" r="0.8" fill="currentColor" stroke="none"/><circle cx="8" cy="17" r="0.8" fill="currentColor" stroke="none"/></svg></div>
         <h3>Server Support</h3>
         <p>Setup, maintenance, troubleshooting.</p>
-      </div>
-      <div class="service-tile">
+        <div class="price-row"><div class="price"><span>Starting at</span>₹1,499</div><div class="book-link">Book →</div></div>
+      </a>
+      <a href="booking.html?service=NAS" class="service-tile">
         <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="7.5" ry="2.4"/><path d="M4.5 6 V18 C4.5 19.3 7.9 20.4 12 20.4 C16.1 20.4 19.5 19.3 19.5 18 V6"/><path d="M4.5 12 C4.5 13.3 7.9 14.4 12 14.4 C16.1 14.4 19.5 13.3 19.5 12"/></svg></div>
         <h3>NAS Installation</h3>
         <p>Storage setup, backup configuration.</p>
-      </div>
-      <div class="service-tile">
+        <div class="price-row"><div class="price"><span>Starting at</span>₹1,499</div><div class="book-link">Book →</div></div>
+      </a>
+      <a href="booking.html?service=Firewall" class="service-tile">
         <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L20 5.5 V11 C20 16 16.5 19.5 12 21 C7.5 19.5 4 16 4 11 V5.5 Z"/><path d="M8.5 12 L11 14.5 L15.5 9"/></svg></div>
         <h3>Firewall Setup</h3>
         <p>FortiGate, Sophos, SonicWall configuration.</p>
-      </div>
-      <div class="service-tile">
+        <div class="price-row"><div class="price"><span>Starting at</span>₹1,999</div><div class="book-link">Book →</div></div>
+      </a>
+      <a href="booking.html?service=AMC" class="service-tile">
         <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11 L12 14 L20 6"/><path d="M20 12 V17 A2 2 0 0 1 18 19 H6 A2 2 0 0 1 4 17 V7 A2 2 0 0 1 6 5 H15"/></svg></div>
         <h3>Office IT AMC</h3>
         <p>Ongoing maintenance contracts for offices.</p>
-      </div>
-      <div class="service-tile">
+        <div class="price-row"><div class="price"><span>Starting at</span>₹2,999/mo</div><div class="book-link">Book →</div></div>
+      </a>
+      <a href="booking.html?service=Home" class="service-tile">
         <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12 L5 12 L7 6 L11 18 L14 9 L16 12 L21 12"/></svg></div>
         <h3>Home IT Support</h3>
         <p>Smart home, personal devices, general help.</p>
-      </div>
-      <div class="service-tile">
+        <div class="price-row"><div class="price"><span>Starting at</span>₹599</div><div class="book-link">Book →</div></div>
+      </a>
+      <a href="booking.html?service=DataRecovery" class="service-tile">
         <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12 C4 7.5 7.5 4 12 4 C16.5 4 20 7.5 20 12"/><path d="M4 12 L4 16 M20 12 L20 16"/><path d="M4 16 C4 18 6 19 8 18 M20 16 C20 18 18 19 16 18"/></svg></div>
         <h3>Data Recovery</h3>
         <p>Recover files from failed drives.</p>
-      </div>
+        <div class="price-row"><div class="price"><span>Starting at</span>₹999</div><div class="book-link">Book →</div></div>
+      </a>
     </div>
   </div>
 </section>

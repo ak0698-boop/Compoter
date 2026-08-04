@@ -103,19 +103,20 @@
 
     <div class="field">
       <label for="b-service">Service Needed</label>
-      <select id="b-service">
-        <option>Computer / Laptop Repair</option>
-        <option>Printer Repair</option>
-        <option>CCTV Installation</option>
-        <option>Networking / WiFi Setup</option>
-        <option>Server Support</option>
-        <option>NAS Installation</option>
-        <option>Firewall (FortiGate, Sophos, etc.)</option>
-        <option>Office IT AMC</option>
-        <option>Home IT Support</option>
-        <option>Data Recovery</option>
-        <option>Not Sure — Please Advise</option>
+      <select id="b-service" onchange="updatePrice()">
+        <option value="Computer" data-price="599">Computer / Laptop Repair — Starting ₹599</option>
+        <option value="Printer" data-price="599">Printer Repair — Starting ₹599</option>
+        <option value="CCTV" data-price="499">CCTV Installation — ₹499 per camera</option>
+        <option value="Networking" data-price="799">Networking / WiFi Setup — Starting ₹799</option>
+        <option value="Server" data-price="1499">Server Support — Starting ₹1,499</option>
+        <option value="NAS" data-price="1499">NAS Installation — Starting ₹1,499</option>
+        <option value="Firewall" data-price="1999">Firewall (FortiGate, Sophos, etc.) — Starting ₹1,999</option>
+        <option value="AMC" data-price="2999">Office IT AMC — Starting ₹2,999/mo</option>
+        <option value="Home" data-price="599">Home IT Support — Starting ₹599</option>
+        <option value="DataRecovery" data-price="999">Data Recovery — Starting ₹999</option>
+        <option value="Other" data-price="">Not Sure — Please Advise</option>
       </select>
+      <div id="price-display" style="margin-top:10px; padding:12px 14px; background:var(--indigo-soft); border-radius:8px; font-size:14px; font-weight:600; color:var(--indigo);"></div>
     </div>
 
     <div class="form-row">
@@ -178,6 +179,32 @@
   const submitBtn = document.getElementById('submit-btn');
   const errorMsg = document.getElementById('error-msg');
 
+  window.updatePrice = function(){
+    const select = document.getElementById('b-service');
+    const opt = select.options[select.selectedIndex];
+    const price = opt.getAttribute('data-price');
+    const display = document.getElementById('price-display');
+    if (price) {
+      let suffix = '';
+      if (opt.value === 'AMC') suffix = '/mo';
+      if (opt.value === 'CCTV') suffix = '/camera';
+      display.textContent = 'Estimated visit charge: ₹' + Number(price).toLocaleString('en-IN') + suffix + ' (final price confirmed after inspection)';
+    } else {
+      display.textContent = "We'll share a quote after understanding your requirement.";
+    }
+  };
+
+  // Preselect service from URL, e.g. booking.html?service=CCTV
+  const params = new URLSearchParams(window.location.search);
+  const preselect = params.get('service');
+  if (preselect) {
+    const select = document.getElementById('b-service');
+    for (let i = 0; i < select.options.length; i++) {
+      if (select.options[i].value === preselect) { select.selectedIndex = i; break; }
+    }
+  }
+  updatePrice();
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     submitBtn.disabled = true;
@@ -191,13 +218,15 @@
       const email = document.getElementById('b-email').value.trim();
       const city = document.getElementById('b-city').value.trim();
       const address = document.getElementById('b-address').value.trim();
-      const service = document.getElementById('b-service').value;
+      const serviceSelect = document.getElementById('b-service');
+      const service = serviceSelect.options[serviceSelect.selectedIndex].text;
+      const estimatedPrice = serviceSelect.options[serviceSelect.selectedIndex].getAttribute('data-price') || '';
       const date = document.getElementById('b-date').value;
       const time = document.getElementById('b-time').value;
       const description = document.getElementById('b-desc').value.trim();
 
       await addDoc(collection(db, "bookings"), {
-        bookingNumber, name, phone, email, city, address, service, date, time, description,
+        bookingNumber, name, phone, email, city, address, service, estimatedPrice, date, time, description,
         status: 'pending',
         assignedEngineer: '',
         createdAt: serverTimestamp()
