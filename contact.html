@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact Us — Compoter</title>
+<meta name="description" content="Get in touch with Compoter — questions about booking, engineers, or partnerships.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+  :root{
+    --paper:#F8F9FC; --paper-raised:#FFFFFF; --ink:#16162B;
+    --indigo:#3730A3; --indigo-deep:#211D5C; --indigo-soft:#EDECFB;
+    --teal:#14B8A6; --teal-deep:#0D9488;
+    --coral:#FF6B57;
+    --steel:#5A5A72; --steel-light:#8E8EA3; --line:#E4E4F0;
+    --display:'Space Grotesk', sans-serif; --body:'Inter', sans-serif; --mono:'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:var(--body); line-height:1.6;}
+  a{color:inherit; text-decoration:none;}
+  .wrap{max-width:1000px; margin:0 auto; padding:0 32px;}
+  h1,h2{font-family:var(--display); font-weight:700; color:var(--ink);}
+
+  header{position:fixed; top:0; left:0; right:0; z-index:50; background:rgba(248,249,252,0.9); backdrop-filter:blur(10px); border-bottom:1px solid var(--line);}
+  .nav{max-width:1180px; margin:0 auto; padding:0 32px; display:flex; align-items:center; justify-content:space-between; height:76px;}
+  .logo{font-family:var(--display); font-weight:800; font-size:19px; display:flex; align-items:center; gap:10px;}
+  .logo .mark{width:32px; height:32px; background:var(--indigo); border-radius:9px; position:relative; flex-shrink:0;}
+  .logo .mark::after{content:""; position:absolute; inset:9px; background:var(--teal); border-radius:3px;}
+  .nav-links{display:flex; align-items:center; gap:34px; font-size:14.5px; font-weight:500;}
+  .nav-links a{color:var(--steel); transition:color .2s;}
+  .nav-links a:hover{color:var(--ink);}
+
+  .btn{
+    font-family:var(--body); font-weight:600; font-size:15px; padding:13px 24px; border-radius:10px;
+    cursor:pointer; border:1.5px solid transparent; transition:all .2s; display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn-primary{background:var(--teal); color:#fff; width:100%; justify-content:center;}
+  .btn-primary:hover{background:var(--teal-deep);}
+  .btn-primary:disabled{opacity:0.6; cursor:not-allowed;}
+  .btn-small{padding:10px 18px; font-size:14px; width:auto;}
+
+  .eyebrow{
+    font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--indigo);
+    display:inline-flex; align-items:center; gap:8px; background:var(--indigo-soft); padding:6px 14px; border-radius:100px;
+  }
+  .eyebrow::before{content:""; width:6px; height:6px; border-radius:50%; background:var(--teal);}
+
+  .page-head{padding:150px 0 40px; text-align:center;}
+  .page-head h1{font-size:clamp(28px,4vw,40px); margin:16px 0 12px;}
+  .page-head p{color:var(--steel); font-size:15.5px; max-width:520px; margin:0 auto;}
+
+  .contact-grid{display:grid; grid-template-columns:0.85fr 1.15fr; gap:40px; padding-bottom:90px;}
+  .info-item{margin-bottom:26px;}
+  .info-item .label{font-family:var(--mono); font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--indigo); margin-bottom:6px;}
+  .info-item .value{font-size:16px; font-weight:600;}
+  .info-item .value.muted{color:var(--steel); font-size:14px; font-weight:400;}
+
+  form{background:var(--paper-raised); border:1px solid var(--line); border-radius:16px; padding:32px;}
+  .form-row{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;}
+  .field{margin-bottom:16px;}
+  .field label{font-size:13px; font-weight:600; display:block; margin-bottom:7px;}
+  .field input, .field textarea{
+    width:100%; background:var(--paper); border:1.5px solid var(--line); border-radius:8px; padding:12px 14px;
+    font-family:var(--body); font-size:14px; color:var(--ink); outline:none; transition:border-color .2s;
+  }
+  .field input:focus, .field textarea:focus{border-color:var(--indigo);}
+  .field textarea{resize:vertical; min-height:110px;}
+
+  .success-box{display:none; margin-top:16px; padding:14px; background:#E6FBF7; border-radius:8px; color:var(--teal-deep); font-size:13.5px; font-weight:600;}
+  .success-box.show{display:block;}
+  .error-msg{color:var(--coral); font-size:13.5px; margin-top:10px; display:none;}
+
+  footer{background:var(--indigo-deep); padding:44px 0; color:#B4B0E8;}
+  .footer-row{max-width:1180px; margin:0 auto; padding:0 32px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;}
+  .footer-links{display:flex; gap:24px; font-size:13.5px;}
+  .footer-links a:hover{color:#fff;}
+  .copyright{font-size:13px;}
+
+  @media (max-width:920px){
+    .nav-links{display:none;}
+    .contact-grid{grid-template-columns:1fr;}
+  }
+  @media (max-width:560px){
+    .page-head{padding:120px 0 20px;}
+    .form-row{grid-template-columns:1fr;}
+    form{padding:22px;}
+    .wrap{padding:0 18px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <a href="index.html" class="logo"><span class="mark"></span>Compoter</a>
+    <nav class="nav-links">
+      <a href="index.html#services">Services</a>
+      <a href="index.html#how-it-works">How It Works</a>
+      <a href="engineer-register.html">Become an Engineer</a>
+    </nav>
+    <a href="booking.html" class="btn btn-primary btn-small">Book Service</a>
+  </div>
+</header>
+
+<section class="page-head">
+  <div class="wrap">
+    <div class="eyebrow">Contact Us</div>
+    <h1>Questions? We're happy to help.</h1>
+    <p>Booking issues, engineer partnerships, or anything else — reach out below.</p>
+  </div>
+</section>
+
+<div class="wrap">
+  <div class="contact-grid">
+    <div>
+      <div class="info-item">
+        <div class="label">Phone</div>
+        <div class="value">0120-4564452</div>
+      </div>
+      <div class="info-item">
+        <div class="label">Email</div>
+        <div class="value">help@compoter.in</div>
+      </div>
+      <div class="info-item">
+        <div class="label">Address</div>
+        <div class="value muted">Y-76, Sector 12, Noida, Uttar Pradesh, 201301</div>
+      </div>
+      <div class="info-item">
+        <div class="label">Hours</div>
+        <div class="value muted">Monday to Saturday, 10:00 AM – 6:30 PM</div>
+      </div>
+    </div>
+
+    <form id="contact-form">
+      <div class="form-row">
+        <div class="field"><label for="c-name">Name</label><input type="text" id="c-name" required placeholder="Your name"></div>
+        <div class="field"><label for="c-phone">Phone</label><input type="tel" id="c-phone" required placeholder="+91 98765 43210"></div>
+      </div>
+      <div class="field"><label for="c-email">Email</label><input type="email" id="c-email" required placeholder="you@email.com"></div>
+      <div class="field"><label for="c-message">Message</label><textarea id="c-message" required placeholder="How can we help?"></textarea></div>
+      <button type="submit" class="btn btn-primary" id="submit-btn">Send Message</button>
+      <p class="error-msg" id="error-msg">Something went wrong. Please try again or call us at 0120-4564452.</p>
+      <div class="success-box" id="success-box">Message sent — we'll get back to you shortly.</div>
+    </form>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-row">
+    <a href="index.html" class="logo" style="color:#fff;"><span class="mark"></span>Compoter</a>
+    <div class="footer-links">
+      <a href="index.html#services">Services</a>
+      <a href="booking.html">Book a Service</a>
+      <a href="engineer-register.html">Become an Engineer</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <div class="copyright">© 2026 Compoter. All rights reserved.</div>
+  </div>
+</footer>
+
+<script>
+  emailjs.init({ publicKey: "mMqKhug76RFv2VLxB" });
+
+  const form = document.getElementById('contact-form');
+  const submitBtn = document.getElementById('submit-btn');
+  const errorMsg = document.getElementById('error-msg');
+  const successBox = document.getElementById('success-box');
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending...';
+    errorMsg.style.display = 'none';
+
+    const name = document.getElementById('c-name').value.trim();
+    const phone = document.getElementById('c-phone').value.trim();
+    const email = document.getElementById('c-email').value.trim();
+    const message = document.getElementById('c-message').value.trim();
+
+    const bodyText = `New contact form inquiry from the Compoter website.\n\nName: ${name}\nPhone: ${phone}\nEmail: ${email}\n\nMessage:\n${message}`;
+
+    emailjs.send("service_p4lpxi5", "template_6k9mcnh", {
+      to_name: "Compoter Team",
+      to_email: "help@compoter.in",
+      reply_message: bodyText,
+      ticket_number: "Website Inquiry"
+    }).then(function(){
+      form.reset();
+      successBox.classList.add('show');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Send Message';
+    }).catch(function(err){
+      console.error(err);
+      errorMsg.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Send Message';
+    });
+  });
+</script>
+
+</body>
+</html>
