@@ -203,7 +203,8 @@
       + `Booking: ${booking.bookingNumber}\nService: ${booking.service}\n`
       + `Customer: ${booking.name} (${booking.phone})\nLocation: ${booking.city}\n`
       + `Address: ${booking.address}\nPreferred: ${booking.date || 'Any date'} — ${booking.time}\n\n`
-      + `Issue: ${booking.description}\n\n- Compoter Team`;
+      + `Issue: ${booking.description}\n\n`
+      + `Status update karne ke liye login karein: https://compoter.in/engineer-dashboard.html\n\n- Compoter Team`;
     emailjs.send("service_p4lpxi5", "template_6k9mcnh", {
       to_name: engineer.name,
       to_email: engineer.email,
@@ -241,7 +242,8 @@
     const msg = `Hi ${b.assignedEngineer}, aapko ek naya service call assign hua hai.\n\n`
       + `Booking: ${b.bookingNumber}\nService: ${b.service}\nCustomer: ${b.name} (${b.phone})\n`
       + `Location: ${b.city}\nAddress: ${b.address}\nPreferred: ${b.date || 'Any date'} - ${b.time || ''}\n\n`
-      + `Issue: ${b.description}\n\n- Compoter Team`;
+      + `Issue: ${b.description}\n\n`
+      + `Status update karne ke liye login karein: https://compoter.in/engineer-dashboard.html\n\n- Compoter Team`;
     return `https://wa.me/${formatWaNumber(b.assignedEngineerPhone)}?text=${encodeURIComponent(msg)}`;
   }
 
@@ -450,6 +452,7 @@
       const update = {
         assignedEngineer: engineer ? engineer.name : '',
         assignedEngineerPhone: engineer ? engineer.phone : '',
+        assignedEngineerUid: engineer ? engineer.uid : '',
         updatedAt: serverTimestamp()
       };
       // Auto-advance a fresh booking to "assigned" the moment an engineer is picked.
