@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
   :root{
     --paper:#F8F9FC; --paper-raised:#FFFFFF; --ink:#101820;
@@ -83,6 +84,11 @@
     font-family:var(--body); font-size:12.5px; padding:7px 9px; border-radius:6px; border:1.5px solid var(--line);
     background:#fff; color:var(--ink); min-width:140px;
   }
+  .wa-btn{
+    display:inline-block; margin-top:8px; background:#25D366; color:#fff; font-size:11.5px; font-weight:700;
+    padding:5px 10px; border-radius:6px; text-decoration:none;
+  }
+  .wa-btn:hover{background:#1DA851;}
   .badge{display:inline-block; font-size:11px; font-weight:700; padding:3px 9px; border-radius:100px; text-transform:capitalize;}
   .badge.pending{background:var(--amber-soft); color:var(--amber);}
   .badge.active, .badge.approved{background:#E6FBF7; color:var(--mint);}
@@ -185,6 +191,67 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
+
+  emailjs.init({ publicKey: "mMqKhug76RFv2VLxB" });
+
+  function notifyEngineerEmail(booking, engineer){
+    if (!engineer.email) return;
+    // Reuses the existing "Contact Us" template (template_6k9mcnh) since the
+    // EmailJS free plan caps templates at 2 and both slots are already used —
+    // it already supports a dynamic to_email, so no new template is needed.
+    const message = `Aapko ek naya service call assign hua hai:\n\n`
+      + `Booking: ${booking.bookingNumber}\nService: ${booking.service}\n`
+      + `Customer: ${booking.name} (${booking.phone})\nLocation: ${booking.city}\n`
+      + `Address: ${booking.address}\nPreferred: ${booking.date || 'Any date'} — ${booking.time}\n\n`
+      + `Issue: ${booking.description}\n\n- Compoter Team`;
+    emailjs.send("service_p4lpxi5", "template_6k9mcnh", {
+      to_name: engineer.name,
+      to_email: engineer.email,
+      reply_message: message,
+      ticket_number: booking.bookingNumber
+    }).catch(err => console.error('Engineer notification email failed:', err));
+  }
+
+  function statusLabel(key){
+    const s = STATUS_OPTIONS.find(s => s.key === key);
+    return s ? s.label : key;
+  }
+
+  function notifyClientEmail(booking, statusKey){
+    if (!booking.email) return;
+    const message = `Aapki booking ka status update hua hai:\n\n`
+      + `Booking: ${booking.bookingNumber}\nService: ${booking.service}\n`
+      + `Naya Status: ${statusLabel(statusKey)}\n`
+      + (booking.assignedEngineer ? `Engineer: ${booking.assignedEngineer}${booking.assignedEngineerPhone ? ' (' + booking.assignedEngineerPhone + ')' : ''}\n` : '')
+      + `\n- Compoter Team`;
+    emailjs.send("service_p4lpxi5", "template_6k9mcnh", {
+      to_name: booking.name,
+      to_email: booking.email,
+      reply_message: message,
+      ticket_number: booking.bookingNumber
+    }).catch(err => console.error('Client notification email failed:', err));
+  }
+
+  function formatWaNumber(phone){
+    const digits = String(phone || '').replace(/\D/g, '');
+    return digits.length === 10 ? '91' + digits : digits;
+  }
+
+  function buildWaLink(b){
+    const msg = `Hi ${b.assignedEngineer}, aapko ek naya service call assign hua hai.\n\n`
+      + `Booking: ${b.bookingNumber}\nService: ${b.service}\nCustomer: ${b.name} (${b.phone})\n`
+      + `Location: ${b.city}\nAddress: ${b.address}\nPreferred: ${b.date || 'Any date'} - ${b.time || ''}\n\n`
+      + `Issue: ${b.description}\n\n- Compoter Team`;
+    return `https://wa.me/${formatWaNumber(b.assignedEngineerPhone)}?text=${encodeURIComponent(msg)}`;
+  }
+
+  function buildClientWaLink(b, statusKey){
+    const msg = `Hi ${b.name}, aapki booking ka status update hua hai.\n\n`
+      + `Booking: ${b.bookingNumber}\nService: ${b.service}\nNaya Status: ${statusLabel(statusKey)}\n`
+      + (b.assignedEngineer ? `Engineer: ${b.assignedEngineer}${b.assignedEngineerPhone ? ' (' + b.assignedEngineerPhone + ')' : ''}\n` : '')
+      + `\n- Compoter Team`;
+    return `https://wa.me/${formatWaNumber(b.phone)}?text=${encodeURIComponent(msg)}`;
+  }
 
   function esc(str){
     return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -315,14 +382,22 @@
         `<option value="${esc(e.id)}" ${b.assignedEngineer === e.name ? 'selected' : ''}>${esc(e.name)}</option>`
       ).join('');
 
+      const waButton = b.assignedEngineer && b.assignedEngineerPhone
+        ? `<a class="wa-btn" target="_blank" rel="noopener" href="${buildWaLink(b)}">📱 WhatsApp</a>`
+        : '';
+
+      const clientWaButton = b.phone
+        ? `<a class="wa-btn" target="_blank" rel="noopener" href="${buildClientWaLink(b, b.status)}">📱 WhatsApp</a>`
+        : '';
+
       return `<tr>
         <td data-label="Booking"><span class="mono">${esc(b.bookingNumber)}</span><div class="cell-sub">${fmtDate(b.createdAt)}</div></td>
-        <td data-label="Customer"><div class="cell-name">${esc(b.name)}</div><div class="cell-sub">${esc(b.phone)}</div></td>
+        <td data-label="Customer"><div class="cell-name">${esc(b.name)}</div><div class="cell-sub">${esc(b.phone)}</div>${clientWaButton}</td>
         <td data-label="Service">${esc(b.service)}</td>
         <td data-label="Location">${esc(b.city)}</td>
         <td data-label="Preferred">${esc(b.date || 'Any date')}<div class="cell-sub">${esc(b.time || '')}</div></td>
         <td data-label="Status"><select class="status-select" data-booking="${esc(b.id)}">${statusOptions}</select></td>
-        <td data-label="Engineer"><select class="eng-select" data-booking="${esc(b.id)}">${engineerOptions}</select></td>
+        <td data-label="Engineer"><select class="eng-select" data-booking="${esc(b.id)}">${engineerOptions}</select>${waButton}</td>
       </tr>`;
     }).join('');
   }
@@ -363,7 +438,9 @@
     if (!bookingId) return;
 
     if (target.classList.contains('status-select')) {
+      const booking = allBookings.find(b => b.id === bookingId);
       await updateDoc(doc(db, 'bookings', bookingId), { status: target.value, updatedAt: serverTimestamp() });
+      if (booking) notifyClientEmail(booking, target.value);
       return;
     }
 
@@ -379,6 +456,9 @@
       if (engineer && booking && booking.status === 'pending') update.status = 'assigned';
       if (!engineer && booking && booking.status === 'assigned') update.status = 'pending';
       await updateDoc(doc(db, 'bookings', bookingId), update);
+
+      if (engineer && booking) notifyEngineerEmail(booking, engineer);
+      if (booking) notifyClientEmail({ ...booking, ...update }, update.status || booking.status);
     }
   });
 
