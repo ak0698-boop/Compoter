@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Compoter</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F8F9FC; --paper-raised:#FFFFFF; --ink:#101820;
+    --indigo:#3730A3; --indigo-deep:#211D5C; --indigo-soft:#EDECFB;
+    --teal:#14B8A6; --mint:#1F8A70; --red:#D6362C; --amber:#B45309; --amber-soft:#FEF3C7;
+    --steel:#57677A; --steel-light:#8A96A3; --line:#E2E6E4;
+    --display:'Space Grotesk', sans-serif; --body:'Inter', sans-serif; --mono:'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:var(--body); line-height:1.5;}
+  a{color:inherit;}
+  h1,h2{font-family:var(--display); font-weight:700;}
+
+  .top{background:var(--indigo-deep); color:#fff; padding:16px 28px; display:flex; align-items:center; justify-content:space-between;}
+  .top .logo{font-family:var(--display); font-weight:700; font-size:17px; display:flex; align-items:center; gap:10px;}
+  .top .logo .mark{width:26px; height:26px; background:var(--teal); border-radius:6px;}
+  .top .who{font-size:13px; color:#C6C2ED; display:flex; align-items:center; gap:14px;}
+  .top button{background:rgba(255,255,255,0.12); color:#fff; border:none; padding:8px 14px; border-radius:7px; cursor:pointer; font-size:13px; font-weight:600;}
+  .top button:hover{background:rgba(255,255,255,0.22);}
+
+  .wrap{max-width:1200px; margin:0 auto; padding:28px;}
+
+  /* LOGIN */
+  #login-view{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;}
+  .login-card{background:var(--paper-raised); border:1px solid var(--line); border-radius:14px; padding:36px; width:100%; max-width:380px;}
+  .login-card h1{font-size:22px; margin-bottom:6px;}
+  .login-card p.sub{color:var(--steel); font-size:13.5px; margin-bottom:24px;}
+  .field{margin-bottom:16px;}
+  .field label{font-size:13px; font-weight:600; display:block; margin-bottom:6px;}
+  .field input, select{
+    width:100%; background:var(--paper); border:1.5px solid var(--line); border-radius:8px; padding:11px 13px;
+    font-family:var(--body); font-size:14px; color:var(--ink); outline:none;
+  }
+  .field input:focus{border-color:var(--indigo);}
+  .btn{
+    font-family:var(--body); font-weight:600; font-size:14.5px; padding:12px 20px; border-radius:8px;
+    cursor:pointer; border:none; width:100%; background:var(--teal); color:#fff;
+  }
+  .btn:hover{background:#0D9488;}
+  .btn:disabled{opacity:0.6; cursor:not-allowed;}
+  .msg{font-size:13px; margin-top:12px; padding:10px 12px; border-radius:7px; display:none;}
+  .msg.show{display:block;}
+  .msg.err{background:#FBE9E7; color:var(--red);}
+  .msg.info{background:var(--indigo-soft); color:var(--indigo);}
+
+  /* DASHBOARD */
+  #dashboard-view{display:none;}
+  .tabs{display:flex; gap:8px; margin-bottom:20px;}
+  .tab-btn{
+    background:var(--paper-raised); border:1px solid var(--line); padding:9px 18px; border-radius:8px;
+    font-size:13.5px; font-weight:600; cursor:pointer; color:var(--steel);
+  }
+  .tab-btn.active{background:var(--indigo); color:#fff; border-color:var(--indigo);}
+
+  .panel{background:var(--paper-raised); border:1px solid var(--line); border-radius:12px; overflow:hidden;}
+  .panel-head{padding:16px 20px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;}
+  .panel-head h2{font-size:16px;}
+  .count-pill{font-family:var(--mono); font-size:11.5px; background:var(--indigo-soft); color:var(--indigo); padding:4px 10px; border-radius:100px;}
+
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  thead th{
+    text-align:left; padding:11px 16px; background:var(--paper); color:var(--steel); font-size:11.5px;
+    text-transform:uppercase; letter-spacing:0.04em; font-weight:600; border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  tbody td{padding:12px 16px; border-bottom:1px solid var(--line); vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--paper);}
+  .cell-name{font-weight:600;}
+  .cell-sub{color:var(--steel-light); font-size:12px; margin-top:2px;}
+  .mono{font-family:var(--mono); font-size:12.5px;}
+
+  select.status-select, select.eng-select{
+    font-family:var(--body); font-size:12.5px; padding:7px 9px; border-radius:6px; border:1.5px solid var(--line);
+    background:#fff; color:var(--ink); min-width:140px;
+  }
+  .badge{display:inline-block; font-size:11px; font-weight:700; padding:3px 9px; border-radius:100px; text-transform:capitalize;}
+  .badge.pending{background:var(--amber-soft); color:var(--amber);}
+  .badge.active, .badge.approved{background:#E6FBF7; color:var(--mint);}
+  .badge.rejected{background:#FBE9E7; color:var(--red);}
+
+  .empty{padding:40px; text-align:center; color:var(--steel-light); font-size:13.5px;}
+
+  @media (max-width:720px){
+    .wrap{padding:16px;}
+    table{font-size:12px;}
+    thead{display:none;}
+    tbody tr{display:block; border-bottom:8px solid var(--paper); }
+    tbody td{display:flex; justify-content:space-between; align-items:center; gap:10px; border-bottom:1px solid var(--line);}
+    tbody td::before{content:attr(data-label); font-weight:600; color:var(--steel-light); font-size:11px; text-transform:uppercase;}
+  }
+</style>
+</head>
+<body>
+
+<div id="login-view">
+  <div class="login-card">
+    <h1>Compoter Admin</h1>
+    <p class="sub">Sign in to manage bookings and engineers.</p>
+    <form id="login-form">
+      <div class="field"><label for="l-email">Email</label><input type="email" id="l-email" required placeholder="you@compoter.in"></div>
+      <div class="field"><label for="l-password">Password</label><input type="password" id="l-password" required placeholder="Password"></div>
+      <button type="submit" class="btn" id="login-btn">Sign In</button>
+      <p class="msg err" id="login-error"></p>
+    </form>
+  </div>
+</div>
+
+<div id="dashboard-view">
+  <div class="top">
+    <div class="logo"><span class="mark"></span>Compoter Admin</div>
+    <div class="who">
+      <span id="who-email"></span>
+      <button id="signout-btn">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-bookings-btn">Bookings</button>
+      <button class="tab-btn" id="tab-engineers-btn">Engineers</button>
+    </div>
+
+    <div id="tab-bookings" class="panel">
+      <div class="panel-head">
+        <h2>Bookings</h2>
+        <span class="count-pill" id="bookings-count">0</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Booking</th><th>Customer</th><th>Service</th><th>Location</th><th>Preferred</th><th>Status</th><th>Engineer</th>
+            </tr>
+          </thead>
+          <tbody id="bookings-tbody"></tbody>
+        </table>
+        <div class="empty" id="bookings-empty" style="display:none;">No bookings yet.</div>
+      </div>
+    </div>
+
+    <div id="tab-engineers" class="panel" style="display:none;">
+      <div class="panel-head">
+        <h2>Engineers</h2>
+        <span class="count-pill" id="engineers-count">0</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th><th>Contact</th><th>City</th><th>Experience</th><th>Skills</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="engineers-tbody"></tbody>
+        </table>
+        <div class="empty" id="engineers-empty" style="display:none;">No engineers registered yet.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, doc, getDoc, updateDoc, collection, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA80s9jtewt93rsveqQyXD2xslm1chJuME",
+    authDomain: "expertinc-tools.firebaseapp.com",
+    projectId: "expertinc-tools",
+    storageBucket: "expertinc-tools.firebasestorage.app",
+    messagingSenderId: "86282664413",
+    appId: "1:86282664413:web:ec3374c7ffe1d99e70de34"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  function esc(str){
+    return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  const loginView = document.getElementById('login-view');
+  const dashboardView = document.getElementById('dashboard-view');
+  const loginForm = document.getElementById('login-form');
+  const loginBtn = document.getElementById('login-btn');
+  const loginError = document.getElementById('login-error');
+  const whoEmail = document.getElementById('who-email');
+
+  function showLoginError(text){
+    loginError.textContent = text;
+    loginError.classList.add('show');
+  }
+
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Signing in...';
+    loginError.classList.remove('show');
+    try {
+      await signInWithEmailAndPassword(auth, document.getElementById('l-email').value.trim(), document.getElementById('l-password').value);
+    } catch (err) {
+      console.error(err);
+      showLoginError('Invalid email or password.');
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'Sign In';
+    }
+  });
+
+  document.getElementById('signout-btn').addEventListener('click', () => signOut(auth));
+
+  let bookingsUnsub = null, engineersUnsub = null;
+
+  onAuthStateChanged(auth, async (user) => {
+    if (bookingsUnsub) { bookingsUnsub(); bookingsUnsub = null; }
+    if (engineersUnsub) { engineersUnsub(); engineersUnsub = null; }
+
+    if (!user) {
+      loginView.style.display = 'flex';
+      dashboardView.style.display = 'none';
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'Sign In';
+      return;
+    }
+
+    const adminDoc = await getDoc(doc(db, 'admins', user.uid));
+    if (!adminDoc.exists()) {
+      showLoginError('This account is not authorized for admin access.');
+      await signOut(auth);
+      return;
+    }
+
+    whoEmail.textContent = user.email;
+    loginView.style.display = 'none';
+    dashboardView.style.display = 'block';
+    startListeners();
+  });
+
+  // ---------- Tabs ----------
+  const tabBookingsBtn = document.getElementById('tab-bookings-btn');
+  const tabEngineersBtn = document.getElementById('tab-engineers-btn');
+  const tabBookings = document.getElementById('tab-bookings');
+  const tabEngineers = document.getElementById('tab-engineers');
+
+  tabBookingsBtn.addEventListener('click', () => {
+    tabBookingsBtn.classList.add('active'); tabEngineersBtn.classList.remove('active');
+    tabBookings.style.display = 'block'; tabEngineers.style.display = 'none';
+  });
+  tabEngineersBtn.addEventListener('click', () => {
+    tabEngineersBtn.classList.add('active'); tabBookingsBtn.classList.remove('active');
+    tabEngineers.style.display = 'block'; tabBookings.style.display = 'none';
+  });
+
+  // ---------- Data ----------
+  const STATUS_OPTIONS = [
+    { key: 'pending', label: 'Pending' },
+    { key: 'assigned', label: 'Assigned' },
+    { key: 'on_the_way', label: 'On the Way' },
+    { key: 'in_progress', label: 'In Progress' },
+    { key: 'completed', label: 'Completed' },
+    { key: 'cancelled', label: 'Cancelled' },
+  ];
+
+  let allBookings = [];
+  let allEngineers = [];
+
+  function startListeners(){
+    bookingsUnsub = onSnapshot(query(collection(db, 'bookings'), orderBy('createdAt', 'desc')), (snap) => {
+      allBookings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderBookings();
+    }, err => console.error('bookings listen failed', err));
+
+    engineersUnsub = onSnapshot(query(collection(db, 'engineers'), orderBy('createdAt', 'desc')), (snap) => {
+      allEngineers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderEngineers();
+      renderBookings(); // engineer dropdowns depend on this list too
+    }, err => console.error('engineers listen failed', err));
+  }
+
+  function fmtDate(ts){
+    if (!ts || !ts.toDate) return '—';
+    return ts.toDate().toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function renderBookings(){
+    const tbody = document.getElementById('bookings-tbody');
+    const empty = document.getElementById('bookings-empty');
+    document.getElementById('bookings-count').textContent = allBookings.length;
+
+    if (!allBookings.length) {
+      tbody.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+
+    const activeEngineers = allEngineers.filter(e => e.status === 'active');
+
+    tbody.innerHTML = allBookings.map(b => {
+      const statusOptions = STATUS_OPTIONS.map(s =>
+        `<option value="${s.key}" ${b.status === s.key ? 'selected' : ''}>${esc(s.label)}</option>`
+      ).join('');
+
+      const engineerOptions = `<option value="">— Unassigned —</option>` + activeEngineers.map(e =>
+        `<option value="${esc(e.id)}" ${b.assignedEngineer === e.name ? 'selected' : ''}>${esc(e.name)}</option>`
+      ).join('');
+
+      return `<tr>
+        <td data-label="Booking"><span class="mono">${esc(b.bookingNumber)}</span><div class="cell-sub">${fmtDate(b.createdAt)}</div></td>
+        <td data-label="Customer"><div class="cell-name">${esc(b.name)}</div><div class="cell-sub">${esc(b.phone)}</div></td>
+        <td data-label="Service">${esc(b.service)}</td>
+        <td data-label="Location">${esc(b.city)}</td>
+        <td data-label="Preferred">${esc(b.date || 'Any date')}<div class="cell-sub">${esc(b.time || '')}</div></td>
+        <td data-label="Status"><select class="status-select" data-booking="${esc(b.id)}">${statusOptions}</select></td>
+        <td data-label="Engineer"><select class="eng-select" data-booking="${esc(b.id)}">${engineerOptions}</select></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderEngineers(){
+    const tbody = document.getElementById('engineers-tbody');
+    const empty = document.getElementById('engineers-empty');
+    document.getElementById('engineers-count').textContent = allEngineers.length;
+
+    if (!allEngineers.length) {
+      tbody.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+
+    tbody.innerHTML = allEngineers.map(e => {
+      const statusSelect = `<select class="status-select" data-engineer="${esc(e.id)}">
+        <option value="pending" ${e.status === 'pending' ? 'selected' : ''}>Pending</option>
+        <option value="active" ${e.status === 'active' ? 'selected' : ''}>Active</option>
+        <option value="rejected" ${e.status === 'rejected' ? 'selected' : ''}>Rejected</option>
+      </select>`;
+
+      return `<tr>
+        <td data-label="Name"><div class="cell-name">${esc(e.name)}</div></td>
+        <td data-label="Contact">${esc(e.phone)}<div class="cell-sub">${esc(e.email)}</div></td>
+        <td data-label="City">${esc(e.city)}</td>
+        <td data-label="Experience">${esc(e.experience)} yrs</td>
+        <td data-label="Skills">${esc((e.skills || []).join(', ') || '—')}</td>
+        <td data-label="Status">${statusSelect}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('bookings-tbody').addEventListener('change', async (e) => {
+    const target = e.target;
+    const bookingId = target.dataset.booking;
+    if (!bookingId) return;
+
+    if (target.classList.contains('status-select')) {
+      await updateDoc(doc(db, 'bookings', bookingId), { status: target.value, updatedAt: serverTimestamp() });
+      return;
+    }
+
+    if (target.classList.contains('eng-select')) {
+      const booking = allBookings.find(b => b.id === bookingId);
+      const engineer = allEngineers.find(en => en.id === target.value);
+      const update = {
+        assignedEngineer: engineer ? engineer.name : '',
+        assignedEngineerPhone: engineer ? engineer.phone : '',
+        updatedAt: serverTimestamp()
+      };
+      // Auto-advance a fresh booking to "assigned" the moment an engineer is picked.
+      if (engineer && booking && booking.status === 'pending') update.status = 'assigned';
+      if (!engineer && booking && booking.status === 'assigned') update.status = 'pending';
+      await updateDoc(doc(db, 'bookings', bookingId), update);
+    }
+  });
+
+  document.getElementById('engineers-tbody').addEventListener('change', async (e) => {
+    const target = e.target;
+    const engineerId = target.dataset.engineer;
+    if (!engineerId || !target.classList.contains('status-select')) return;
+    await updateDoc(doc(db, 'engineers', engineerId), { status: target.value });
+  });
+</script>
+
+</body>
+</html>

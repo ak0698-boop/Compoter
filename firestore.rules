@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    match /bookings/{bookingId} {
+      allow get: if true;        // chatbot: direct lookup by booking number
+      allow list: if isAdmin();  // admin dashboard only — no public enumeration
+      allow create: if true;     // booking.html writes without auth (same as today)
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    match /bookingsByPhone/{phoneKey} {
+      allow get: if true;        // chatbot: direct lookup by exact phone
+      allow list: if false;      // never listable
+      allow write: if true;      // booking.html appends to it on each booking
+    }
+
+    match /counters/{counterId} {
+      allow read, write: if true;
+    }
+
+    match /engineers/{engineerId} {
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+      allow read: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    match /admins/{adminId} {
+      allow read, write: if false; // checked internally via exists(), never read directly
+    }
+  }
+}

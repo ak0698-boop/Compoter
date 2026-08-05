@@ -147,7 +147,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, collection, addDoc, doc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, doc, setDoc, runTransaction, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyA80s9jtewt93rsveqQyXD2xslm1chJuME",
@@ -173,6 +173,11 @@
       return next;
     });
     return "BK-" + newNumber;
+  }
+
+  // Last 10 digits, so +91 98765 43210 / 9876543210 / 91-98765-43210 all match.
+  function normalizePhone(phone){
+    return phone.replace(/\D/g, '').slice(-10);
   }
 
   const form = document.getElementById('booking-form');
@@ -225,12 +230,22 @@
       const time = document.getElementById('b-time').value;
       const description = document.getElementById('b-desc').value.trim();
 
-      await addDoc(collection(db, "bookings"), {
-        bookingNumber, name, phone, email, city, address, service, estimatedPrice, date, time, description,
+      const phoneKey = normalizePhone(phone);
+
+      await setDoc(doc(db, "bookings", bookingNumber), {
+        bookingNumber, name, phone, phoneKey, email, city, address, service, estimatedPrice, date, time, description,
         status: 'pending',
         assignedEngineer: '',
-        createdAt: serverTimestamp()
+        assignedEngineerPhone: '',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       });
+
+      // Index for phone-based lookup in the tracking chatbot (kept separate from
+      // the bookings collection so Firestore rules never need to allow listing it).
+      await setDoc(doc(db, "bookingsByPhone", phoneKey), {
+        bookingNumbers: arrayUnion(bookingNumber)
+      }, { merge: true });
 
       emailjs.send("service_p4lpxi5", "template_7lziz6o", {
         ticket_number: bookingNumber,
@@ -255,5 +270,6 @@
   });
 </script>
 
+<script type="module" src="chatbot.js"></script>
 </body>
 </html>

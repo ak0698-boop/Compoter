@@ -1,0 +1,302 @@
+// Compoter booking-tracking chatbot widget.
+// Drop `<script type="module" src="chatbot.js"></script>` before </body> on any page.
+// Reads live from Firestore (bookings / bookingsByPhone) — no manual updates needed;
+// admin.html is the only thing that ever writes status/engineer, and this widget
+// reflects those writes instantly via onSnapshot.
+
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA80s9jtewt93rsveqQyXD2xslm1chJuME",
+  authDomain: "expertinc-tools.firebaseapp.com",
+  projectId: "expertinc-tools",
+  storageBucket: "expertinc-tools.firebasestorage.app",
+  messagingSenderId: "86282664413",
+  appId: "1:86282664413:web:ec3374c7ffe1d99e70de34"
+};
+
+const app = getApps().some(a => a.name === "compoter-chatbot")
+  ? getApp("compoter-chatbot")
+  : initializeApp(firebaseConfig, "compoter-chatbot");
+const db = getFirestore(app);
+
+const STATUS_STEPS = [
+  { key: 'pending',     label: 'Booked',              icon: '📝' },
+  { key: 'assigned',    label: 'Engineer Assigned',   icon: '🧑‍🔧' },
+  { key: 'on_the_way',  label: 'On the Way',          icon: '🚗' },
+  { key: 'in_progress', label: 'In Progress',         icon: '🔧' },
+  { key: 'completed',   label: 'Completed',           icon: '✅' },
+];
+
+function esc(str){
+  return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function statusLabel(key){
+  const s = STATUS_STEPS.find(s => s.key === key);
+  if (s) return s.label;
+  if (key === 'cancelled') return 'Cancelled';
+  return 'Pending';
+}
+
+function normalizePhone(phone){
+  return phone.replace(/\D/g, '').slice(-10);
+}
+
+function injectStyles(){
+  const style = document.createElement('style');
+  style.textContent = `
+    #cptr-chat-fab{
+      position:fixed; right:20px; bottom:20px; z-index:9999; display:flex; align-items:center; gap:8px;
+      background:var(--indigo,#3730A3); color:#fff; border:none; border-radius:999px; padding:14px 18px;
+      font-family:var(--body,'Inter',sans-serif); font-weight:600; font-size:14px; cursor:pointer;
+      box-shadow:0 8px 24px rgba(0,0,0,0.2); transition:transform .15s ease;
+    }
+    #cptr-chat-fab:hover{ transform:translateY(-2px); }
+    #cptr-chat-fab .cptr-emoji{ font-size:18px; }
+    #cptr-chat-panel{
+      position:fixed; right:20px; bottom:88px; z-index:9999; width:340px; max-width:calc(100vw - 40px);
+      height:460px; max-height:calc(100vh - 140px); background:var(--paper-raised,#fff); border:1px solid var(--line,#E2E6E4);
+      border-radius:14px; box-shadow:0 16px 48px rgba(0,0,0,0.25); display:flex; flex-direction:column; overflow:hidden;
+      font-family:var(--body,'Inter',sans-serif);
+    }
+    #cptr-chat-panel.cptr-hidden{ display:none; }
+    .cptr-chat-header{
+      background:var(--indigo,#3730A3); color:#fff; padding:14px 16px; display:flex; align-items:center;
+      justify-content:space-between; font-family:var(--display,'Space Grotesk',sans-serif); font-weight:700; font-size:15px;
+    }
+    .cptr-chat-header button{ background:none; border:none; color:#fff; font-size:16px; cursor:pointer; opacity:0.85; }
+    .cptr-chat-header button:hover{ opacity:1; }
+    .cptr-chat-messages{ flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px; background:var(--paper,#F8F9FC); }
+    .cptr-msg{ max-width:88%; padding:10px 13px; border-radius:12px; font-size:13.5px; line-height:1.5; }
+    .cptr-msg--bot{ background:#fff; border:1px solid var(--line,#E2E6E4); align-self:flex-start; border-bottom-left-radius:3px; }
+    .cptr-msg--user{ background:var(--indigo,#3730A3); color:#fff; align-self:flex-end; border-bottom-right-radius:3px; }
+    .cptr-chat-form{ display:flex; gap:8px; padding:10px; border-top:1px solid var(--line,#E2E6E4); background:#fff; }
+    .cptr-chat-form input{
+      flex:1; border:1.5px solid var(--line,#E2E6E4); border-radius:8px; padding:9px 12px; font-size:13.5px;
+      font-family:var(--body,'Inter',sans-serif); outline:none;
+    }
+    .cptr-chat-form input:focus{ border-color:var(--indigo,#3730A3); }
+    .cptr-chat-form button{
+      background:var(--teal,#14B8A6); color:#fff; border:none; border-radius:8px; width:38px; font-size:15px; cursor:pointer;
+    }
+    .cptr-chat-quick{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+    .cptr-chat-chip{
+      background:var(--indigo-soft,#EDECFB); color:var(--indigo,#3730A3); border:none; border-radius:999px;
+      padding:6px 12px; font-size:12.5px; font-weight:600; cursor:pointer;
+    }
+    .cptr-chat-chip:hover{ background:var(--indigo,#3730A3); color:#fff; }
+    .cptr-chat-card{ background:#fff; }
+    .cptr-chat-card-title{ font-family:var(--display,'Space Grotesk',sans-serif); font-weight:700; font-size:14px; margin-bottom:2px; }
+    .cptr-chat-card-sub{ color:var(--steel,#57677A); font-size:12px; margin-bottom:10px; }
+    .cptr-steps{ display:flex; flex-direction:column; gap:6px; margin:8px 0; }
+    .cptr-step{ display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--steel-light,#8A96A3); }
+    .cptr-step.done{ color:var(--mint,#1F8A70); }
+    .cptr-step.active{ color:var(--indigo,#3730A3); font-weight:700; }
+    .cptr-step-dot{ font-size:14px; }
+    .cptr-chat-engineer{ margin-top:10px; padding:9px 11px; background:var(--indigo-soft,#EDECFB); border-radius:8px; }
+    .cptr-chat-engineer--pending{ background:var(--paper,#F8F9FC); color:var(--steel,#57677A); font-size:12.5px; }
+    .cptr-chat-engineer-name{ font-weight:600; font-size:13px; }
+    .cptr-chat-engineer-call{ display:inline-block; margin-top:4px; font-size:12.5px; color:var(--teal,#14B8A6); font-weight:600; }
+    .cptr-chat-card--cancelled .cptr-chat-card-title{ color:var(--red,#D6362C); }
+  `;
+  document.head.appendChild(style);
+}
+
+let messagesEl, inputEl, panelEl;
+let currentUnsub = null;
+let greeted = false;
+
+function scrollToBottom(){
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function addBotHTML(html){
+  const div = document.createElement('div');
+  div.className = 'cptr-msg cptr-msg--bot';
+  div.innerHTML = html;
+  messagesEl.appendChild(div);
+  scrollToBottom();
+}
+
+function addBotText(text){
+  addBotHTML(esc(text));
+}
+
+function addUserText(text){
+  const div = document.createElement('div');
+  div.className = 'cptr-msg cptr-msg--user';
+  div.textContent = text;
+  messagesEl.appendChild(div);
+  scrollToBottom();
+}
+
+function buildStatusCardHTML(data){
+  if (data.status === 'cancelled') {
+    return `<div class="cptr-chat-card cptr-chat-card--cancelled">
+      <div class="cptr-chat-card-title">${esc(data.bookingNumber)} — Cancelled</div>
+      <div class="cptr-chat-card-sub">${esc(data.service)}</div>
+    </div>`;
+  }
+
+  let idx = STATUS_STEPS.findIndex(s => s.key === data.status);
+  if (idx < 0) idx = 0;
+
+  const steps = STATUS_STEPS.map((s, i) => `
+    <div class="cptr-step ${i < idx ? 'done' : i === idx ? 'active' : ''}">
+      <span class="cptr-step-dot">${s.icon}</span>
+      <span class="cptr-step-label">${esc(s.label)}</span>
+    </div>`).join('');
+
+  const engineerHTML = data.assignedEngineer
+    ? `<div class="cptr-chat-engineer">
+         <div class="cptr-chat-engineer-name">🧑‍🔧 ${esc(data.assignedEngineer)}</div>
+         ${data.assignedEngineerPhone ? `<a class="cptr-chat-engineer-call" href="tel:${esc(data.assignedEngineerPhone)}">📞 Call Engineer</a>` : ''}
+       </div>`
+    : `<div class="cptr-chat-engineer cptr-chat-engineer--pending">Engineer jald hi assign kiya jayega.</div>`;
+
+  return `<div class="cptr-chat-card">
+    <div class="cptr-chat-card-title">${esc(data.bookingNumber)} — ${esc(data.service)}</div>
+    <div class="cptr-chat-card-sub">${esc(data.city)} • ${esc(data.date || 'Date TBD')} ${esc(data.time || '')}</div>
+    <div class="cptr-steps">${steps}</div>
+    ${engineerHTML}
+  </div>`;
+}
+
+function buildBookingListHTML(numbers){
+  return `Aapke number se <b>${numbers.length}</b> bookings mili. Kaunsi dekhni hai?
+    <div class="cptr-chat-quick">${numbers.map(n => `<button class="cptr-chat-chip" data-booking="${esc(n)}">${esc(n)}</button>`).join('')}</div>`;
+}
+
+function watchBooking(bookingNumber){
+  if (currentUnsub) { currentUnsub(); currentUnsub = null; }
+  let first = true;
+  currentUnsub = onSnapshot(doc(db, 'bookings', bookingNumber), (snap) => {
+    if (!snap.exists()) return;
+    const data = snap.data();
+    if (first) {
+      addBotHTML(buildStatusCardHTML(data));
+      first = false;
+    } else {
+      addBotHTML(`🔔 <b>Update:</b> ${esc(data.bookingNumber)} ka status ab hai — <b>${esc(statusLabel(data.status))}</b>`);
+      addBotHTML(buildStatusCardHTML(data));
+    }
+  }, (err) => {
+    console.error('Compoter chatbot: booking watch failed', err);
+    addBotText('Live update abhi nahi mil paa raha. Thodi der baad dobara try karein.');
+  });
+}
+
+async function lookupByBookingNumber(bookingNumber){
+  addBotText('Dhoondh raha hoon...');
+  try {
+    const snap = await getDoc(doc(db, 'bookings', bookingNumber));
+    if (!snap.exists()) {
+      addBotText(`"${bookingNumber}" naam ki koi booking nahi mili. Booking ID dobara check karein.`);
+      return;
+    }
+    watchBooking(bookingNumber);
+  } catch (e) {
+    console.error(e);
+    addBotText('Kuch gadbad ho gayi. Thodi der baad try karein ya WhatsApp par sampark karein.');
+  }
+}
+
+async function lookupByPhone(phoneKey){
+  addBotText('Dhoondh raha hoon...');
+  try {
+    const idxSnap = await getDoc(doc(db, 'bookingsByPhone', phoneKey));
+    const numbers = idxSnap.exists() ? (idxSnap.data().bookingNumbers || []) : [];
+    if (!numbers.length) {
+      addBotText('Is phone number se koi booking nahi mili. Booking ID try karein ya WhatsApp par sampark karein.');
+      return;
+    }
+    if (numbers.length === 1) {
+      watchBooking(numbers[0]);
+      return;
+    }
+    addBotHTML(buildBookingListHTML(numbers));
+  } catch (e) {
+    console.error(e);
+    addBotText('Kuch gadbad ho gayi. Thodi der baad try karein.');
+  }
+}
+
+async function handleUserInput(raw){
+  const value = raw.trim();
+  if (!value) return;
+  addUserText(value);
+
+  const bkMatch = value.toUpperCase().match(/^BK-?\s*(\d+)$/);
+  if (bkMatch) {
+    await lookupByBookingNumber('BK-' + bkMatch[1]);
+    return;
+  }
+
+  const digits = value.replace(/\D/g, '');
+  if (digits.length >= 7) {
+    await lookupByPhone(normalizePhone(digits));
+    return;
+  }
+
+  addBotText('Mujhe samajh nahi aaya 🤔 Kripya apna Booking ID (jaise BK-5001) ya 10-digit phone number bhejein.');
+}
+
+function greet(){
+  if (greeted) return;
+  greeted = true;
+  addBotText('Hi! 👋 Main Compoter Assistant hoon. Apni booking ka live status jaanne ke liye apna Booking ID (jaise BK-5001) ya registered phone number bhejein.');
+}
+
+function injectWidget(){
+  const root = document.createElement('div');
+  root.id = 'cptr-chatbot-root';
+  root.innerHTML = `
+    <button id="cptr-chat-fab" type="button"><span class="cptr-emoji">💬</span>Track Booking</button>
+    <div id="cptr-chat-panel" class="cptr-hidden">
+      <div class="cptr-chat-header">
+        <span>Compoter Assistant</span>
+        <button id="cptr-chat-close" type="button" aria-label="Close">✕</button>
+      </div>
+      <div id="cptr-chat-messages" class="cptr-chat-messages"></div>
+      <form id="cptr-chat-form" class="cptr-chat-form">
+        <input id="cptr-chat-input" type="text" placeholder="Booking ID ya Phone Number" autocomplete="off">
+        <button type="submit" aria-label="Send">➤</button>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(root);
+
+  const fab = document.getElementById('cptr-chat-fab');
+  panelEl = document.getElementById('cptr-chat-panel');
+  messagesEl = document.getElementById('cptr-chat-messages');
+  inputEl = document.getElementById('cptr-chat-input');
+  const form = document.getElementById('cptr-chat-form');
+  const closeBtn = document.getElementById('cptr-chat-close');
+
+  fab.addEventListener('click', () => {
+    panelEl.classList.toggle('cptr-hidden');
+    if (!panelEl.classList.contains('cptr-hidden')) {
+      greet();
+      inputEl.focus();
+    }
+  });
+
+  closeBtn.addEventListener('click', () => panelEl.classList.add('cptr-hidden'));
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const value = inputEl.value;
+    inputEl.value = '';
+    handleUserInput(value);
+  });
+
+  messagesEl.addEventListener('click', (e) => {
+    const chip = e.target.closest('[data-booking]');
+    if (chip) watchBooking(chip.dataset.booking);
+  });
+}
+
+injectStyles();
+injectWidget();
