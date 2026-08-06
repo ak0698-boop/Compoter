@@ -9,6 +9,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root{
     --paper:#F8F9FC; --paper-raised:#FFFFFF; --ink:#101820;
@@ -104,6 +106,12 @@
     tbody td{display:flex; justify-content:space-between; align-items:center; gap:10px; border-bottom:1px solid var(--line);}
     tbody td::before{content:attr(data-label); font-weight:600; color:var(--steel-light); font-size:11px; text-transform:uppercase;}
   }
+
+  .engineer-marker{
+    background:#fff; border:2px solid var(--indigo); border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:15px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.25);
+  }
 </style>
 </head>
 <body>
@@ -134,6 +142,7 @@
     <div class="tabs">
       <button class="tab-btn active" id="tab-bookings-btn">Bookings</button>
       <button class="tab-btn" id="tab-engineers-btn">Engineers</button>
+      <button class="tab-btn" id="tab-map-btn">Live Map</button>
     </div>
 
     <div id="tab-bookings" class="panel">
@@ -170,6 +179,14 @@
         </table>
         <div class="empty" id="engineers-empty" style="display:none;">No engineers registered yet.</div>
       </div>
+    </div>
+
+    <div id="tab-map" class="panel" style="display:none;">
+      <div class="panel-head">
+        <h2>Live Map</h2>
+        <span class="count-pill" id="map-count">0</span>
+      </div>
+      <div id="map" style="height:560px;"></div>
     </div>
   </div>
 </div>
@@ -328,16 +345,24 @@
   // ---------- Tabs ----------
   const tabBookingsBtn = document.getElementById('tab-bookings-btn');
   const tabEngineersBtn = document.getElementById('tab-engineers-btn');
+  const tabMapBtn = document.getElementById('tab-map-btn');
   const tabBookings = document.getElementById('tab-bookings');
   const tabEngineers = document.getElementById('tab-engineers');
+  const tabMap = document.getElementById('tab-map');
 
-  tabBookingsBtn.addEventListener('click', () => {
-    tabBookingsBtn.classList.add('active'); tabEngineersBtn.classList.remove('active');
-    tabBookings.style.display = 'block'; tabEngineers.style.display = 'none';
-  });
-  tabEngineersBtn.addEventListener('click', () => {
-    tabEngineersBtn.classList.add('active'); tabBookingsBtn.classList.remove('active');
-    tabEngineers.style.display = 'block'; tabBookings.style.display = 'none';
+  function showTab(activeBtn, activePanel){
+    [tabBookingsBtn, tabEngineersBtn, tabMapBtn].forEach(b => b.classList.remove('active'));
+    [tabBookings, tabEngineers, tabMap].forEach(p => p.style.display = 'none');
+    activeBtn.classList.add('active');
+    activePanel.style.display = 'block';
+  }
+
+  tabBookingsBtn.addEventListener('click', () => showTab(tabBookingsBtn, tabBookings));
+  tabEngineersBtn.addEventListener('click', () => showTab(tabEngineersBtn, tabEngineers));
+  tabMapBtn.addEventListener('click', () => {
+    showTab(tabMapBtn, tabMap);
+    initMapIfNeeded();
+    updateMapMarkers();
   });
 
   // ---------- Data ----------
@@ -363,7 +388,55 @@
       allEngineers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderEngineers();
       renderBookings(); // engineer dropdowns depend on this list too
+      updateMapMarkers();
     }, err => console.error('engineers listen failed', err));
+  }
+
+  // ---------- Live Map (Leaflet / OpenStreetMap — free, no API key) ----------
+  let map = null;
+  const mapMarkers = {}; // engineer doc id -> L.marker
+
+  function initMapIfNeeded(){
+    if (map || !window.L) return;
+    map = L.map('map').setView([28.5355, 77.3910], 11); // Noida / Delhi NCR
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(map);
+  }
+
+  const engineerIcon = window.L ? L.divIcon({
+    html: '🧑‍🔧',
+    className: 'engineer-marker',
+    iconSize: [28, 28],
+  }) : null;
+
+  function updateMapMarkers(){
+    if (!map || !window.L) return;
+
+    const activeWithLocation = allEngineers.filter(e => e.status === 'active' && e.location);
+    document.getElementById('map-count').textContent = activeWithLocation.length;
+
+    const seenIds = new Set();
+    activeWithLocation.forEach(e => {
+      seenIds.add(e.id);
+      const pos = [e.location.lat, e.location.lng];
+      if (mapMarkers[e.id]) {
+        mapMarkers[e.id].setLatLng(pos);
+      } else {
+        mapMarkers[e.id] = L.marker(pos, { icon: engineerIcon })
+          .addTo(map)
+          .bindPopup(`<b>${esc(e.name)}</b><br>${esc(e.phone || '')}`);
+      }
+    });
+
+    // Remove markers for engineers who went inactive or lost their location.
+    Object.keys(mapMarkers).forEach(id => {
+      if (!seenIds.has(id)) {
+        map.removeLayer(mapMarkers[id]);
+        delete mapMarkers[id];
+      }
+    });
   }
 
   function fmtDate(ts){
