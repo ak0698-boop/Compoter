@@ -142,7 +142,10 @@
     appId: "1:86282664413:web:ec3374c7ffe1d99e70de34"
   };
 
-  const app = initializeApp(firebaseConfig);
+  // Named app so its login session doesn't collide with admin.html — both pages
+  // share the compoter.in origin, and Firebase's default persistence is shared
+  // across every tab of that origin unless the apps are named differently.
+  const app = initializeApp(firebaseConfig, "compoter-engineer");
   const auth = getAuth(app);
   const db = getFirestore(app);
 
