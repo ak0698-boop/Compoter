@@ -223,10 +223,6 @@
     }
   }
 
-  // Keeps the engineer's last-known GPS position on their engineers doc so the
-  // auto-assignment Cloud Function can match nearby jobs to them. Only ever
-  // writes location/locationUpdatedAt — Firestore rules restrict self-updates
-  // to exactly those two fields.
   function startLocationTracking(engineerDocId){
     if (!navigator.geolocation) return;
     locationWatchId = navigator.geolocation.watchPosition(
