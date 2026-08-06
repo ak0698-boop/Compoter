@@ -228,25 +228,32 @@
   // mirrors it onto any job currently on_the_way/in_progress so the customer's
   // chatbot can show a live map. Firestore rules restrict what fields each of
   // these self-updates is allowed to touch.
+  let lastKnownLocation = null;
+
+  function pushLocationToActiveJobs(loc){
+    currentJobs
+      .filter(j => j.status === 'on_the_way' || j.status === 'in_progress')
+      .forEach(j => {
+        updateDoc(doc(db, 'bookings', j.id), {
+          engineerLocation: loc,
+          updatedAt: serverTimestamp()
+        }).catch(err => console.error('Booking location update failed:', err));
+      });
+  }
+
   function startLocationTracking(engineerDocId){
     if (!navigator.geolocation) return;
     locationWatchId = navigator.geolocation.watchPosition(
       (pos) => {
         const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        lastKnownLocation = loc;
 
         updateDoc(doc(db, 'engineers', engineerDocId), {
           location: loc,
           locationUpdatedAt: serverTimestamp()
         }).catch(err => console.error('Location update failed:', err));
 
-        currentJobs
-          .filter(j => j.status === 'on_the_way' || j.status === 'in_progress')
-          .forEach(j => {
-            updateDoc(doc(db, 'bookings', j.id), {
-              engineerLocation: loc,
-              updatedAt: serverTimestamp()
-            }).catch(err => console.error('Booking location update failed:', err));
-          });
+        pushLocationToActiveJobs(loc);
       },
       (err) => console.error('Geolocation error:', err),
       { enableHighAccuracy: true, maximumAge: 60000, timeout: 15000 }
@@ -296,6 +303,7 @@
         currentJobs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         currentJobs.sort((a, b) => (b.updatedAt?.toMillis?.() || 0) - (a.updatedAt?.toMillis?.() || 0));
         renderJobs(currentJobs);
+        if (lastKnownLocation) pushLocationToActiveJobs(lastKnownLocation);
       },
       err => console.error('jobs listen failed', err)
     );
