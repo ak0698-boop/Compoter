@@ -100,8 +100,32 @@ function injectStyles(){
     .cptr-chat-engineer-name{ font-weight:600; font-size:13px; }
     .cptr-chat-engineer-call{ display:inline-block; margin-top:4px; font-size:12.5px; color:var(--teal,#14B8A6); font-weight:600; }
     .cptr-chat-card--cancelled .cptr-chat-card-title{ color:var(--red,#D6362C); }
+    .cptr-live-map{ height:160px; border-radius:8px; margin-top:10px; overflow:hidden; }
+    .cptr-map-pin{
+      background:#fff; border:2px solid var(--indigo,#3730A3); border-radius:50%;
+      display:flex; align-items:center; justify-content:center; font-size:13px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.25);
+    }
+    .cptr-map-pin--home{ border-color:var(--teal,#14B8A6); }
   `;
   document.head.appendChild(style);
+}
+
+let leafletLoadPromise = null;
+function ensureLeaflet(){
+  if (window.L) return Promise.resolve();
+  if (leafletLoadPromise) return leafletLoadPromise;
+  leafletLoadPromise = new Promise((resolve) => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(link);
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script.onload = () => resolve();
+    document.head.appendChild(script);
+  });
+  return leafletLoadPromise;
 }
 
 let messagesEl, inputEl, panelEl;
@@ -132,7 +156,7 @@ function addUserText(text){
   scrollToBottom();
 }
 
-function buildStatusCardHTML(data){
+function buildStatusCardHTML(data, mapContainerId){
   if (data.status === 'cancelled') {
     return `<div class="cptr-chat-card cptr-chat-card--cancelled">
       <div class="cptr-chat-card-title">${esc(data.bookingNumber)} — Cancelled</div>
@@ -156,11 +180,15 @@ function buildStatusCardHTML(data){
        </div>`
     : `<div class="cptr-chat-engineer cptr-chat-engineer--pending">Engineer jald hi assign kiya jayega.</div>`;
 
+  const showLiveMap = (data.status === 'on_the_way' || data.status === 'in_progress') && mapContainerId;
+  const mapHTML = showLiveMap ? `<div class="cptr-live-map" id="${esc(mapContainerId)}"></div>` : '';
+
   return `<div class="cptr-chat-card">
     <div class="cptr-chat-card-title">${esc(data.bookingNumber)} — ${esc(data.service)}</div>
     <div class="cptr-chat-card-sub">${esc(data.city)} • ${esc(data.date || 'Date TBD')} ${esc(data.time || '')}</div>
     <div class="cptr-steps">${steps}</div>
     ${engineerHTML}
+    ${mapHTML}
   </div>`;
 }
 
@@ -169,19 +197,67 @@ function buildBookingListHTML(numbers){
     <div class="cptr-chat-quick">${numbers.map(n => `<button class="cptr-chat-chip" data-booking="${esc(n)}">${esc(n)}</button>`).join('')}</div>`;
 }
 
+let liveMap = null;
+let liveMapMarker = null;
+let liveMapHomeMarker = null;
+let liveMapContainerId = null;
+
+async function updateLiveMap(data){
+  if (!liveMapContainerId || !data.engineerLocation) return;
+  const el = document.getElementById(liveMapContainerId);
+  if (!el) return;
+
+  await ensureLeaflet();
+  const engPos = [data.engineerLocation.lat, data.engineerLocation.lng];
+
+  if (!liveMap) {
+    liveMap = L.map(liveMapContainerId).setView(engPos, 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(liveMap);
+    liveMapMarker = L.marker(engPos, {
+      icon: L.divIcon({ html: '🧑‍🔧', className: 'cptr-map-pin', iconSize: [26, 26] })
+    }).addTo(liveMap);
+
+    if (data.location) {
+      liveMapHomeMarker = L.marker([data.location.lat, data.location.lng], {
+        icon: L.divIcon({ html: '📍', className: 'cptr-map-pin cptr-map-pin--home', iconSize: [26, 26] })
+      }).addTo(liveMap);
+      liveMap.fitBounds([engPos, [data.location.lat, data.location.lng]], { padding: [20, 20] });
+    }
+  } else {
+    liveMapMarker.setLatLng(engPos);
+    liveMap.panTo(engPos);
+  }
+}
+
 function watchBooking(bookingNumber){
   if (currentUnsub) { currentUnsub(); currentUnsub = null; }
+  liveMap = null;
+  liveMapMarker = null;
+  liveMapHomeMarker = null;
+  liveMapContainerId = null;
+
   let first = true;
+  let lastStatus = null;
+
   currentUnsub = onSnapshot(doc(db, 'bookings', bookingNumber), (snap) => {
     if (!snap.exists()) return;
     const data = snap.data();
-    if (first) {
-      addBotHTML(buildStatusCardHTML(data));
+
+    if (first || data.status !== lastStatus) {
+      if (!first) {
+        addBotHTML(`🔔 <b>Update:</b> ${esc(data.bookingNumber)} ka status ab hai — <b>${esc(statusLabel(data.status))}</b>`);
+      }
+      liveMap = null; // fresh card = fresh map container, re-init on next update
+      liveMapContainerId = 'cptr-map-' + Math.random().toString(36).slice(2);
+      addBotHTML(buildStatusCardHTML(data, liveMapContainerId));
       first = false;
-    } else {
-      addBotHTML(`🔔 <b>Update:</b> ${esc(data.bookingNumber)} ka status ab hai — <b>${esc(statusLabel(data.status))}</b>`);
-      addBotHTML(buildStatusCardHTML(data));
+      lastStatus = data.status;
     }
+
+    updateLiveMap(data);
   }, (err) => {
     console.error('Compoter chatbot: booking watch failed', err);
     addBotText('Live update abhi nahi mil paa raha. Thodi der baad dobara try karein.');

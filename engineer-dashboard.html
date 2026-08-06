@@ -223,14 +223,30 @@
     }
   }
 
+  // Keeps the engineer's last-known GPS position on their engineers doc so the
+  // auto-assignment Cloud Function can match nearby jobs to them, and also
+  // mirrors it onto any job currently on_the_way/in_progress so the customer's
+  // chatbot can show a live map. Firestore rules restrict what fields each of
+  // these self-updates is allowed to touch.
   function startLocationTracking(engineerDocId){
     if (!navigator.geolocation) return;
     locationWatchId = navigator.geolocation.watchPosition(
       (pos) => {
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+
         updateDoc(doc(db, 'engineers', engineerDocId), {
-          location: { lat: pos.coords.latitude, lng: pos.coords.longitude },
+          location: loc,
           locationUpdatedAt: serverTimestamp()
         }).catch(err => console.error('Location update failed:', err));
+
+        currentJobs
+          .filter(j => j.status === 'on_the_way' || j.status === 'in_progress')
+          .forEach(j => {
+            updateDoc(doc(db, 'bookings', j.id), {
+              engineerLocation: loc,
+              updatedAt: serverTimestamp()
+            }).catch(err => console.error('Booking location update failed:', err));
+          });
       },
       (err) => console.error('Geolocation error:', err),
       { enableHighAccuracy: true, maximumAge: 60000, timeout: 15000 }
