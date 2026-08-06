@@ -5,7 +5,7 @@
 // reflects those writes instantly via onSnapshot.
 
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeFirestore, getFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA80s9jtewt93rsveqQyXD2xslm1chJuME",
@@ -19,7 +19,16 @@ const firebaseConfig = {
 const app = getApps().some(a => a.name === "compoter-chatbot")
   ? getApp("compoter-chatbot")
   : initializeApp(firebaseConfig, "compoter-chatbot");
-const db = getFirestore(app);
+// Auto-fallback to long-polling — some networks block/throttle Firestore's
+// default QUIC/WebChannel connection. initializeFirestore throws if called
+// twice for the same app (e.g. chatbot.js injected more than once), so fall
+// back to the already-initialized instance in that case.
+let db;
+try {
+  db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+} catch (e) {
+  db = getFirestore(app);
+}
 
 const STATUS_STEPS = [
   { key: 'pending',     label: 'Booked',              icon: '📝' },

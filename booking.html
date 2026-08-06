@@ -147,10 +147,10 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, doc, setDoc, runTransaction, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { initializeFirestore, doc, setDoc, runTransaction, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
-    apiKey: "AIzaSyA8•••••••••••••••••••••••••••••••",
+    apiKey: "AIzaSyA80s9jtewt93rsveqQyXD2xslm1chJuME",
     authDomain: "expertinc-tools.firebaseapp.com",
     projectId: "expertinc-tools",
     storageBucket: "expertinc-tools.firebasestorage.app",
@@ -159,7 +159,9 @@
   };
 
   const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+  // Auto-fallback to long-polling — some networks block/throttle Firestore's
+  // default QUIC/WebChannel connection.
+  const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
 
   emailjs.init({ publicKey: "mMqKhug76RFv2VLxB" });
 
@@ -288,4 +290,3 @@
 <script type="module" src="chatbot.js"></script>
 </body>
 </html>
-

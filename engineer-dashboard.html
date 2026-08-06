@@ -131,7 +131,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { getFirestore, doc, updateDoc, collection, query, where, onSnapshot, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { initializeFirestore, doc, updateDoc, collection, query, where, onSnapshot, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyA80s9jtewt93rsveqQyXD2xslm1chJuME",
@@ -147,7 +147,10 @@
   // across every tab of that origin unless the apps are named differently.
   const app = initializeApp(firebaseConfig, "compoter-engineer");
   const auth = getAuth(app);
-  const db = getFirestore(app);
+  // Auto-fallback to long-polling — some networks block/throttle Firestore's
+  // default QUIC/WebChannel connection, which silently rolls back optimistic
+  // local writes (a click appears to work, then reverts) until it resyncs.
+  const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
 
   emailjs.init({ publicKey: "mMqKhug76RFv2VLxB" });
 
