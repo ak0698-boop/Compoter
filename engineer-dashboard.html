@@ -223,9 +223,17 @@
       return;
     }
 
-    const engSnap = await getDocs(query(collection(db, 'engineers'), where('uid', '==', user.uid)));
+    let engSnap;
+    try {
+      engSnap = await getDocs(query(collection(db, 'engineers'), where('uid', '==', user.uid)));
+    } catch (err) {
+      console.error(err);
+      showLoginError('Lookup failed (' + (err.code || err.message) + '). UID: ' + user.uid);
+      await signOut(auth);
+      return;
+    }
     if (engSnap.empty) {
-      showLoginError('Ye account engineer ke roop me register nahi hai.');
+      showLoginError('Engineer record not found. UID checked: ' + user.uid);
       await signOut(auth);
       return;
     }

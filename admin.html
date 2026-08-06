@@ -302,9 +302,16 @@
       return;
     }
 
-    const adminDoc = await getDoc(doc(db, 'admins', user.uid));
-    if (!adminDoc.exists()) {
-      showLoginError('This account is not authorized for admin access.');
+    try {
+      const adminDoc = await getDoc(doc(db, 'admins', user.uid));
+      if (!adminDoc.exists()) {
+        showLoginError('Not authorized. UID checked: ' + user.uid);
+        await signOut(auth);
+        return;
+      }
+    } catch (err) {
+      console.error(err);
+      showLoginError('Admin check failed (' + (err.code || err.message) + '). UID: ' + user.uid);
       await signOut(auth);
       return;
     }
