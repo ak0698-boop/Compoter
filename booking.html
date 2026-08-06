@@ -150,7 +150,7 @@
   import { getFirestore, doc, setDoc, runTransaction, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
-    apiKey: "AIzaSyA80s9jtewt93rsveqQyXD2xslm1chJuME",
+    apiKey: "AIzaSyA8•••••••••••••••••••••••••••••••",
     authDomain: "expertinc-tools.firebaseapp.com",
     projectId: "expertinc-tools",
     storageBucket: "expertinc-tools.firebasestorage.app",
@@ -178,6 +178,19 @@
   // Last 10 digits, so +91 98765 43210 / 9876543210 / 91-98765-43210 all match.
   function normalizePhone(phone){
     return phone.replace(/\D/g, '').slice(-10);
+  }
+
+  // Best-effort GPS capture for nearest-engineer auto-assignment. Never blocks
+  // the booking — resolves to null if unsupported, denied, or slow.
+  function getLocation(){
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) { resolve(null); return; }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => resolve(null),
+        { timeout: 8000 }
+      );
+    });
   }
 
   const form = document.getElementById('booking-form');
@@ -231,12 +244,15 @@
       const description = document.getElementById('b-desc').value.trim();
 
       const phoneKey = normalizePhone(phone);
+      const location = await getLocation();
 
       await setDoc(doc(db, "bookings", bookingNumber), {
         bookingNumber, name, phone, phoneKey, email, city, address, service, estimatedPrice, date, time, description,
         status: 'pending',
         assignedEngineer: '',
         assignedEngineerPhone: '',
+        assignedEngineerUid: '',
+        location,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
