@@ -137,6 +137,10 @@
         <label for="name-input">Full Name</label>
         <input type="text" id="name-input" placeholder="Your name">
       </div>
+      <div class="field">
+        <label for="email-input">Email</label>
+        <input type="email" id="email-input" placeholder="you@example.com">
+      </div>
       <button class="btn" id="save-name-btn">Continue</button>
       <p class="msg err" id="name-error"></p>
     </div>
@@ -217,6 +221,7 @@
   const otpSub = document.getElementById('otp-sub');
   const changeNumberLink = document.getElementById('change-number-link');
   const nameInput = document.getElementById('name-input');
+  const emailInput = document.getElementById('email-input');
   const saveNameBtn = document.getElementById('save-name-btn');
   const nameError = document.getElementById('name-error');
 
@@ -294,9 +299,15 @@
 
   saveNameBtn.addEventListener('click', async () => {
     const name = nameInput.value.trim();
+    const email = emailInput.value.trim();
     nameError.classList.remove('show');
     if (!name) {
       nameError.textContent = 'Naam daalein.';
+      nameError.classList.add('show');
+      return;
+    }
+    if (!email || !email.includes('@')) {
+      nameError.textContent = 'Sahi email daalein.';
       nameError.classList.add('show');
       return;
     }
@@ -306,6 +317,7 @@
       await setDoc(doc(db, 'customers', pendingUser.uid), {
         uid: pendingUser.uid,
         name,
+        email,
         phone: pendingUser.phoneNumber,
         phoneKey: normalizePhone(pendingUser.phoneNumber),
         createdAt: new Date().toISOString()
