@@ -77,6 +77,10 @@
   .addon-qty button{width:26px; height:26px; border-radius:6px; border:1px solid var(--line); background:#fff; cursor:pointer; font-weight:700; font-size:14px;}
   .addon-qty span{min-width:16px; text-align:center; font-weight:600; font-size:13.5px;}
 
+  .price-breakdown{background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin:20px 0;}
+  .price-breakdown .pb-row{display:flex; justify-content:space-between; font-size:13.5px; color:var(--steel); padding:5px 0;}
+  .price-breakdown .pb-total{border-top:1px solid var(--line); margin-top:6px; padding-top:12px; font-size:15.5px; font-weight:700; color:var(--ink);}
+
   @media (max-width:560px){
     .page-head{padding:120px 0 20px;}
     .form-row{grid-template-columns:1fr;}
@@ -143,7 +147,12 @@
     <div class="field" id="addons-field" style="display:none;">
       <label>Select what you need (optional — helps the engineer come prepared)</label>
       <div id="addons-list"></div>
-      <div id="addons-summary" style="margin-top:4px; padding:12px 14px; background:var(--indigo-soft); border-radius:8px; font-size:14px; font-weight:600; color:var(--indigo); display:none;"></div>
+    </div>
+
+    <div class="price-breakdown">
+      <div class="pb-row"><span>Visiting &amp; Labour Charge</span><span id="pb-labour">—</span></div>
+      <div id="pb-items"></div>
+      <div class="pb-row pb-total"><span>Total (estimated)</span><span id="pb-total">—</span></div>
     </div>
 
     <div class="form-row">
@@ -295,14 +304,31 @@
     return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
-  function updateAddonsSummary(items){
-    const summary = document.getElementById('addons-summary');
+  function updateBreakdown(){
+    const select = document.getElementById('b-service');
+    const opt = select.options[select.selectedIndex];
+    const priceAttr = opt.getAttribute('data-price');
+    const items = ADDONS[select.value] || [];
     const selected = items.filter(i => addonQty[i.id] > 0);
-    if (!selected.length) { summary.style.display = 'none'; return; }
-    const total = selected.reduce((sum, i) => sum + i.price * addonQty[i.id], 0);
-    const count = selected.reduce((sum, i) => sum + addonQty[i.id], 0);
-    summary.style.display = 'block';
-    summary.textContent = count + ' item' + (count > 1 ? 's' : '') + ' selected — estimated add-on total: ₹' + total.toLocaleString('en-IN');
+
+    document.getElementById('pb-items').innerHTML = selected.map(i => `
+      <div class="pb-row"><span>${esc(i.name)} x${addonQty[i.id]}</span><span>₹${(i.price * addonQty[i.id]).toLocaleString('en-IN')}</span></div>
+    `).join('');
+
+    const labourEl = document.getElementById('pb-labour');
+    const totalEl = document.getElementById('pb-total');
+    if (priceAttr) {
+      const labour = Number(priceAttr);
+      let suffix = '';
+      if (opt.value === 'AMC') suffix = '/mo';
+      if (opt.value === 'CCTV') suffix = '/camera';
+      labourEl.textContent = '₹' + labour.toLocaleString('en-IN') + suffix;
+      const itemsTotal = selected.reduce((sum, i) => sum + i.price * addonQty[i.id], 0);
+      totalEl.textContent = '₹' + (labour + itemsTotal).toLocaleString('en-IN') + suffix;
+    } else {
+      labourEl.textContent = 'To be quoted';
+      totalEl.textContent = 'To be quoted';
+    }
   }
 
   function renderAddons(serviceValue){
@@ -312,6 +338,7 @@
     if (!items) {
       field.style.display = 'none';
       addonQty = {};
+      updateBreakdown();
       return;
     }
     field.style.display = 'block';
@@ -332,7 +359,7 @@
         </div>
       </div>
     `).join('');
-    updateAddonsSummary(items);
+    updateBreakdown();
   }
 
   document.getElementById('addons-list').addEventListener('click', (e) => {
@@ -402,12 +429,14 @@
         .filter(i => addonQty[i.id] > 0)
         .map(i => ({ name: i.name, price: i.price, qty: addonQty[i.id] }));
       const addOnsTotal = addOns.reduce((sum, i) => sum + i.price * i.qty, 0);
+      const labourCharge = estimatedPrice ? Number(estimatedPrice) : 0;
+      const totalEstimate = estimatedPrice ? (labourCharge + addOnsTotal) : '';
 
       const phoneKey = normalizePhone(phone);
       const location = savedLocation;
 
       await setDoc(doc(db, "bookings", bookingNumber), {
-        bookingNumber, name, phone, phoneKey, email, city, address, service, estimatedPrice, addOns, addOnsTotal, date, time, description,
+        bookingNumber, name, phone, phoneKey, email, city, address, service, estimatedPrice, labourCharge, addOns, addOnsTotal, totalEstimate, date, time, description,
         status: 'pending',
         assignedEngineer: '',
         assignedEngineerPhone: '',
@@ -424,7 +453,10 @@
       }, { merge: true });
 
       const addOnsText = addOns.length
-        ? `\n\nItems selected:\n` + addOns.map(i => `- ${i.name} x${i.qty} (₹${i.price * i.qty})`).join('\n') + `\nAdd-on total: ₹${addOnsTotal.toLocaleString('en-IN')}`
+        ? `\n\nItems selected:\n` + addOns.map(i => `- ${i.name} x${i.qty} (₹${i.price * i.qty})`).join('\n')
+        : '';
+      const totalText = estimatedPrice
+        ? `\n\nVisiting & Labour Charge: ₹${labourCharge.toLocaleString('en-IN')}\nEstimated Total: ₹${Number(totalEstimate).toLocaleString('en-IN')}`
         : '';
 
       emailjs.send("service_p4lpxi5", "template_7lziz6o", {
@@ -434,7 +466,7 @@
         client_email: email,
         client_company: city,
         priority: service,
-        issue_message: `Address: ${address}\nPreferred: ${date || 'Any date'} — ${time}\n\n${description}${addOnsText}`
+        issue_message: `Address: ${address}\nPreferred: ${date || 'Any date'} — ${time}\n\n${description}${addOnsText}${totalText}`
       }).catch(err => console.error("Notification email failed:", err));
 
       document.getElementById('booking-number').textContent = bookingNumber;

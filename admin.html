@@ -481,7 +481,7 @@
       return `<tr>
         <td data-label="Booking"><span class="mono">${esc(b.bookingNumber)}</span><div class="cell-sub">${fmtDate(b.createdAt)}</div></td>
         <td data-label="Customer"><div class="cell-name">${esc(b.name)}</div><div class="cell-sub">${esc(b.phone)}</div>${clientWaButton}</td>
-        <td data-label="Service">${esc(b.service)}${(b.addOns && b.addOns.length) ? `<div class="cell-sub">${b.addOns.map(i => esc(i.name) + ' x' + i.qty).join(', ')} (₹${(b.addOnsTotal || 0).toLocaleString('en-IN')})</div>` : ''}</td>
+        <td data-label="Service">${esc(b.service)}${(b.addOns && b.addOns.length) ? `<div class="cell-sub">${b.addOns.map(i => esc(i.name) + ' x' + i.qty).join(', ')} (₹${(b.addOnsTotal || 0).toLocaleString('en-IN')})</div>` : ''}${b.totalEstimate ? `<div class="cell-sub">Est. total: ₹${Number(b.totalEstimate).toLocaleString('en-IN')}</div>` : ''}</td>
         <td data-label="Location">${esc(b.city)}</td>
         <td data-label="Preferred">${esc(b.date || 'Any date')}<div class="cell-sub">${esc(b.time || '')}</div></td>
         <td data-label="Status"><select class="status-select" data-booking="${esc(b.id)}">${statusOptions}</select></td>

@@ -634,6 +634,9 @@
       const addOnsHTML = (b.addOns && b.addOns.length)
         ? `<div class="job-row"><b>Items requested:</b> ${b.addOns.map(i => esc(i.name) + ' x' + i.qty).join(', ')} (₹${(b.addOnsTotal || 0).toLocaleString('en-IN')})</div>`
         : '';
+      const totalHTML = b.totalEstimate
+        ? `<div class="job-row"><b>Estimated Total:</b> ₹${Number(b.totalEstimate).toLocaleString('en-IN')} (incl. visiting/labour ₹${(b.labourCharge || 0).toLocaleString('en-IN')})</div>`
+        : '';
 
       return `<div class="job-card">
         <div class="job-top">
@@ -646,6 +649,7 @@
         <div class="job-row"><b>Address:</b> ${esc(b.address)}</div>
         <div class="job-row"><b>Preferred:</b> ${esc(b.date || 'Any date')} — ${esc(b.time || '')}</div>
         ${addOnsHTML}
+        ${totalHTML}
         <div class="job-desc">${esc(b.description)}</div>
         <div class="job-actions">${actionBtn}${callLink}${directionsLink}</div>
       </div>`;
