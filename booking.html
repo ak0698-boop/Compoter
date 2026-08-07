@@ -78,6 +78,7 @@
 <header>
   <div class="nav">
     <a href="index.html" class="logo"><span class="mark"></span>Compoter</a>
+    <a href="customer-login.html" style="font-size:13.5px; font-weight:600; color:var(--indigo);">My Bookings</a>
   </div>
 </header>
 
@@ -142,6 +143,7 @@
     <p>Your booking reference is:</p>
     <div class="booking-num" id="booking-number"></div>
     <p>We'll assign a verified engineer and confirm the visit time by phone or email shortly.</p>
+    <p style="margin-top:18px; font-size:13.5px;"><a href="customer-login.html" style="color:var(--teal); font-weight:600;">Create an account →</a> to track all your bookings and their live status in one place.</p>
   </div>
 </div>
 
@@ -235,7 +237,7 @@
       const bookingNumber = await getNextBookingNumber();
       const name = document.getElementById('b-name').value.trim();
       const phone = document.getElementById('b-phone').value.trim();
-      const email = document.getElementById('b-email').value.trim();
+      const email = document.getElementById('b-email').value.trim().toLowerCase();
       const city = document.getElementById('b-city').value.trim();
       const address = document.getElementById('b-address').value.trim();
       const serviceSelect = document.getElementById('b-service');
