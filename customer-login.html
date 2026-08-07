@@ -23,13 +23,9 @@
   a{color:inherit; text-decoration:none;}
   h1,h2{font-family:var(--display); font-weight:700;}
 
-  header{position:fixed; top:0; left:0; right:0; z-index:50; background:rgba(246,247,245,0.9); backdrop-filter:blur(10px); border-bottom:1px solid var(--line);}
-  .nav{max-width:1180px; margin:0 auto; padding:0 32px; display:flex; align-items:center; justify-content:space-between; height:76px;}
-  .logo{font-family:var(--display); font-weight:700; font-size:18px; display:flex; align-items:center; gap:10px;}
-  .logo .mark{width:30px; height:30px; background:var(--indigo); border-radius:7px; position:relative; flex-shrink:0;}
-  .logo .mark::after{content:""; position:absolute; inset:8px; background:var(--teal); border-radius:2px;}
-
   .top{background:var(--indigo-deep); color:#fff; padding:16px 28px; display:flex; align-items:center; justify-content:space-between;}
+  .top .logo{font-family:var(--display); font-weight:700; font-size:17px; display:flex; align-items:center; gap:10px;}
+  .top .logo .mark{width:26px; height:26px; background:var(--teal); border-radius:6px;}
   .top .who{font-size:13px; color:#C6C2ED; display:flex; align-items:center; gap:14px;}
   .top button{background:rgba(255,255,255,0.12); color:#fff; border:none; padding:8px 14px; border-radius:7px; cursor:pointer; font-size:13px; font-weight:600;}
   .top button:hover{background:rgba(255,255,255,0.22);}
@@ -41,9 +37,6 @@
   .auth-card{background:var(--paper-raised); border:1px solid var(--line); border-radius:14px; padding:36px; width:100%; max-width:400px;}
   .auth-card h1{font-size:22px; margin-bottom:6px;}
   .auth-card p.sub{color:var(--steel); font-size:13.5px; margin-bottom:22px;}
-  .auth-tabs{display:flex; gap:8px; margin-bottom:20px; background:var(--paper); border-radius:8px; padding:4px;}
-  .auth-tab{flex:1; text-align:center; padding:9px; border-radius:6px; font-size:13.5px; font-weight:600; cursor:pointer; color:var(--steel);}
-  .auth-tab.active{background:#fff; color:var(--indigo); box-shadow:0 1px 3px rgba(0,0,0,0.1);}
   .field{margin-bottom:14px;}
   .field label{font-size:13px; font-weight:600; display:block; margin-bottom:6px;}
   .field input{
@@ -51,6 +44,11 @@
     font-family:var(--body); font-size:14px; color:var(--ink); outline:none;
   }
   .field input:focus{border-color:var(--indigo);}
+  .phone-row{display:flex; gap:8px;}
+  .phone-prefix{
+    padding:11px 13px; background:var(--paper); border:1.5px solid var(--line); border-radius:8px;
+    font-weight:600; font-size:14px; display:flex; align-items:center;
+  }
   .btn{
     font-family:var(--body); font-weight:600; font-size:14.5px; padding:12px 20px; border-radius:8px;
     cursor:pointer; border:none; width:100%; background:var(--teal); color:#fff;
@@ -60,7 +58,7 @@
   .msg{font-size:13px; margin-top:12px; padding:10px 12px; border-radius:7px; display:none;}
   .msg.show{display:block;}
   .msg.err{background:#FBE9E7; color:var(--red);}
-  #signup-form{display:none;}
+  .change-link{display:block; text-align:center; margin-top:14px; font-size:13px; color:var(--indigo); font-weight:600;}
 
   /* DASHBOARD */
   #dashboard-view{display:none;}
@@ -101,28 +99,45 @@
 
 <div id="auth-view">
   <div class="auth-card">
-    <div class="auth-tabs">
-      <div class="auth-tab active" id="tab-login">Sign In</div>
-      <div class="auth-tab" id="tab-signup">Create Account</div>
+
+    <div id="phone-step">
+      <h1>Track Your Bookings</h1>
+      <p class="sub">Apna phone number daalo, hum OTP bhejenge.</p>
+      <div class="field">
+        <label for="phone-input">Phone Number</label>
+        <div class="phone-row">
+          <span class="phone-prefix">+91</span>
+          <input type="tel" id="phone-input" placeholder="98765 43210" maxlength="10" inputmode="numeric" style="flex:1;">
+        </div>
+      </div>
+      <button class="btn" id="send-otp-btn">Send OTP</button>
+      <p class="msg err" id="phone-error"></p>
     </div>
-    <h1 id="auth-title">Track Your Bookings</h1>
-    <p class="sub" id="auth-sub">Sign in to see all your bookings and their live status in one place.</p>
 
-    <form id="login-form">
-      <div class="field"><label for="l-email">Email</label><input type="email" id="l-email" required placeholder="you@email.com"></div>
-      <div class="field"><label for="l-password">Password</label><input type="password" id="l-password" required placeholder="Password"></div>
-      <button type="submit" class="btn" id="login-btn">Sign In</button>
-      <p class="msg err" id="login-error"></p>
-    </form>
+    <div id="otp-step" style="display:none;">
+      <h1>Enter OTP</h1>
+      <p class="sub" id="otp-sub"></p>
+      <div class="field">
+        <label for="otp-input">6-digit OTP</label>
+        <input type="text" id="otp-input" placeholder="123456" maxlength="6" inputmode="numeric">
+      </div>
+      <button class="btn" id="verify-otp-btn">Verify &amp; Continue</button>
+      <p class="msg err" id="otp-error"></p>
+      <a href="#" class="change-link" id="change-number-link">Change number</a>
+    </div>
 
-    <form id="signup-form">
-      <div class="field"><label for="s-name">Name</label><input type="text" id="s-name" required placeholder="Your name"></div>
-      <div class="field"><label for="s-email">Email</label><input type="email" id="s-email" required placeholder="you@email.com"></div>
-      <div class="field"><label for="s-phone">Phone</label><input type="tel" id="s-phone" required placeholder="+91 98765 43210"></div>
-      <div class="field"><label for="s-password">Create Password</label><input type="password" id="s-password" required placeholder="At least 6 characters"></div>
-      <button type="submit" class="btn" id="signup-btn">Create Account</button>
-      <p class="msg err" id="signup-error"></p>
-    </form>
+    <div id="name-step" style="display:none;">
+      <h1>What's your name?</h1>
+      <p class="sub">Taaki hum aapko sahi se pehchan sakein.</p>
+      <div class="field">
+        <label for="name-input">Full Name</label>
+        <input type="text" id="name-input" placeholder="Your name">
+      </div>
+      <button class="btn" id="save-name-btn">Continue</button>
+      <p class="msg err" id="name-error"></p>
+    </div>
+
+    <div id="recaptcha-container"></div>
   </div>
 </div>
 
@@ -144,8 +159,8 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { initializeFirestore, doc, getDoc, setDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { initializeFirestore, doc, getDoc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyA80s9jtewt93rsveqQyXD2xslm1chJuME",
@@ -162,7 +177,7 @@
   const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
 
   function normalizePhone(phone){
-    return phone.replace(/\D/g, '').slice(-10);
+    return String(phone || '').replace(/\D/g, '').slice(-10);
   }
 
   function esc(str){
@@ -177,78 +192,119 @@
     { key: 'completed',   label: 'Completed',           icon: '✅' },
   ];
 
-  // ---------- Auth tabs ----------
-  const tabLogin = document.getElementById('tab-login');
-  const tabSignup = document.getElementById('tab-signup');
-  const loginForm = document.getElementById('login-form');
-  const signupForm = document.getElementById('signup-form');
-  const authTitle = document.getElementById('auth-title');
-  const authSub = document.getElementById('auth-sub');
+  // ---------- Phone + OTP auth ----------
+  const phoneStep = document.getElementById('phone-step');
+  const otpStep = document.getElementById('otp-step');
+  const nameStep = document.getElementById('name-step');
+  const phoneInput = document.getElementById('phone-input');
+  const sendOtpBtn = document.getElementById('send-otp-btn');
+  const phoneError = document.getElementById('phone-error');
+  const otpInput = document.getElementById('otp-input');
+  const verifyOtpBtn = document.getElementById('verify-otp-btn');
+  const otpError = document.getElementById('otp-error');
+  const otpSub = document.getElementById('otp-sub');
+  const changeNumberLink = document.getElementById('change-number-link');
+  const nameInput = document.getElementById('name-input');
+  const saveNameBtn = document.getElementById('save-name-btn');
+  const nameError = document.getElementById('name-error');
 
-  tabLogin.addEventListener('click', () => {
-    tabLogin.classList.add('active'); tabSignup.classList.remove('active');
-    loginForm.style.display = 'block'; signupForm.style.display = 'none';
-    authTitle.textContent = 'Track Your Bookings';
-    authSub.textContent = 'Sign in to see all your bookings and their live status in one place.';
-  });
-  tabSignup.addEventListener('click', () => {
-    tabSignup.classList.add('active'); tabLogin.classList.remove('active');
-    signupForm.style.display = 'block'; loginForm.style.display = 'none';
-    authTitle.textContent = 'Create Your Account';
-    authSub.textContent = 'Use the same email or phone you book with, so your bookings show up automatically.';
-  });
+  function showStep(step){
+    [phoneStep, otpStep, nameStep].forEach(s => s.style.display = 'none');
+    step.style.display = 'block';
+  }
 
-  const loginBtn = document.getElementById('login-btn');
-  const loginError = document.getElementById('login-error');
-  const signupBtn = document.getElementById('signup-btn');
-  const signupError = document.getElementById('signup-error');
+  let recaptchaVerifier = null;
+  function getRecaptcha(){
+    if (!recaptchaVerifier) {
+      recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+    }
+    return recaptchaVerifier;
+  }
 
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    loginBtn.disabled = true;
-    loginBtn.textContent = 'Signing in...';
-    loginError.classList.remove('show');
+  let confirmationResult = null;
+
+  sendOtpBtn.addEventListener('click', async () => {
+    const digits = phoneInput.value.replace(/\D/g, '');
+    phoneError.classList.remove('show');
+    if (digits.length !== 10) {
+      phoneError.textContent = 'Sahi 10-digit phone number daalein.';
+      phoneError.classList.add('show');
+      return;
+    }
+    sendOtpBtn.disabled = true;
+    sendOtpBtn.textContent = 'Sending...';
     try {
-      await signInWithEmailAndPassword(auth, document.getElementById('l-email').value.trim().toLowerCase(), document.getElementById('l-password').value);
+      const fullNumber = '+91' + digits;
+      confirmationResult = await signInWithPhoneNumber(auth, fullNumber, getRecaptcha());
+      otpSub.textContent = fullNumber + ' par OTP bheja gaya hai.';
+      otpInput.value = '';
+      showStep(otpStep);
+      otpInput.focus();
     } catch (err) {
       console.error(err);
-      loginError.textContent = 'Sign-in failed (' + (err.code || err.message) + ').';
-      loginError.classList.add('show');
-      loginBtn.disabled = false;
-      loginBtn.textContent = 'Sign In';
+      phoneError.textContent = 'OTP bhejne me dikkat (' + (err.code || err.message) + ').';
+      phoneError.classList.add('show');
+    } finally {
+      sendOtpBtn.disabled = false;
+      sendOtpBtn.textContent = 'Send OTP';
     }
   });
 
-  signupForm.addEventListener('submit', async (e) => {
+  changeNumberLink.addEventListener('click', (e) => {
     e.preventDefault();
-    signupBtn.disabled = true;
-    signupBtn.textContent = 'Creating account...';
-    signupError.classList.remove('show');
+    otpError.classList.remove('show');
+    showStep(phoneStep);
+  });
 
-    const name = document.getElementById('s-name').value.trim();
-    const email = document.getElementById('s-email').value.trim().toLowerCase();
-    const phone = document.getElementById('s-phone').value.trim();
-    const password = document.getElementById('s-password').value;
-
+  verifyOtpBtn.addEventListener('click', async () => {
+    const code = otpInput.value.trim();
+    otpError.classList.remove('show');
+    if (code.length !== 6) {
+      otpError.textContent = '6-digit OTP daalein.';
+      otpError.classList.add('show');
+      return;
+    }
+    verifyOtpBtn.disabled = true;
+    verifyOtpBtn.textContent = 'Verifying...';
     try {
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-      await setDoc(doc(db, 'customers', cred.user.uid), {
-        uid: cred.user.uid, name, email, phone,
-        phoneKey: normalizePhone(phone),
-        createdAt: new Date().toISOString()
-      });
+      await confirmationResult.confirm(code);
+      // onAuthStateChanged takes over from here.
     } catch (err) {
       console.error(err);
-      if (err.code === 'auth/email-already-in-use') {
-        signupError.textContent = 'Ye email pehle se registered hai. Sign In tab try karein.';
-      } else if (err.code === 'auth/weak-password') {
-        signupError.textContent = 'Password kam se kam 6 characters ka hona chahiye.';
-      } else {
-        signupError.textContent = 'Kuch gadbad ho gayi (' + (err.code || err.message) + ').';
-      }
-      signupError.classList.add('show');
-      signupBtn.disabled = false;
-      signupBtn.textContent = 'Create Account';
+      otpError.textContent = 'Galat OTP (' + (err.code || err.message) + ').';
+      otpError.classList.add('show');
+      verifyOtpBtn.disabled = false;
+      verifyOtpBtn.textContent = 'Verify & Continue';
+    }
+  });
+
+  let pendingUser = null;
+
+  saveNameBtn.addEventListener('click', async () => {
+    const name = nameInput.value.trim();
+    nameError.classList.remove('show');
+    if (!name) {
+      nameError.textContent = 'Naam daalein.';
+      nameError.classList.add('show');
+      return;
+    }
+    saveNameBtn.disabled = true;
+    saveNameBtn.textContent = 'Saving...';
+    try {
+      await setDoc(doc(db, 'customers', pendingUser.uid), {
+        uid: pendingUser.uid,
+        name,
+        phone: pendingUser.phoneNumber,
+        phoneKey: normalizePhone(pendingUser.phoneNumber),
+        createdAt: new Date().toISOString()
+      });
+      await loadDashboard(pendingUser, name);
+    } catch (err) {
+      console.error(err);
+      nameError.textContent = 'Kuch gadbad ho gayi (' + (err.code || err.message) + ').';
+      nameError.classList.add('show');
+      saveNameBtn.disabled = false;
+      saveNameBtn.textContent = 'Continue';
     }
   });
 
@@ -261,13 +317,11 @@
 
   document.getElementById('signout-btn').addEventListener('click', () => signOut(auth));
 
-  let emailUnsub = null;
   const bookingUnsubs = {}; // bookingNumber -> unsub
   let bookingsMap = {};     // bookingId -> data
-  const liveMaps = {};      // bookingId -> { map, marker, containerId }
+  const liveMaps = {};      // bookingId -> { map, marker }
 
   function stopAllTracking(){
-    if (emailUnsub) { emailUnsub(); emailUnsub = null; }
     Object.values(bookingUnsubs).forEach(u => u());
     Object.keys(bookingUnsubs).forEach(k => delete bookingUnsubs[k]);
     bookingsMap = {};
@@ -280,47 +334,57 @@
     if (!user) {
       authView.style.display = 'flex';
       dashboardView.style.display = 'none';
-      loginBtn.disabled = false; loginBtn.textContent = 'Sign In';
-      signupBtn.disabled = false; signupBtn.textContent = 'Create Account';
+      showStep(phoneStep);
+      verifyOtpBtn.disabled = false; verifyOtpBtn.textContent = 'Verify & Continue';
+      sendOtpBtn.disabled = false; sendOtpBtn.textContent = 'Send OTP';
       return;
     }
 
-    whoName.textContent = user.email;
+    let custSnap;
+    try {
+      custSnap = await getDoc(doc(db, 'customers', user.uid));
+    } catch (err) {
+      console.error('customer profile lookup failed', err);
+      return;
+    }
+
+    if (!custSnap.exists()) {
+      pendingUser = user;
+      authView.style.display = 'flex';
+      dashboardView.style.display = 'none';
+      nameError.classList.remove('show');
+      saveNameBtn.disabled = false; saveNameBtn.textContent = 'Continue';
+      showStep(nameStep);
+      return;
+    }
+
+    await loadDashboard(user, custSnap.data().name);
+  });
+
+  async function loadDashboard(user, name){
+    whoName.textContent = name || user.phoneNumber;
     authView.style.display = 'none';
     dashboardView.style.display = 'block';
 
-    // 1) Live list of bookings matching this account's email.
-    emailUnsub = onSnapshot(
-      query(collection(db, 'bookings'), where('email', '==', user.email)),
-      (snap) => {
-        snap.docs.forEach(d => { bookingsMap[d.id] = { id: d.id, ...d.data() }; });
-        renderAll();
-      },
-      err => console.error('email bookings listen failed', err)
-    );
+    const phoneKey = normalizePhone(user.phoneNumber);
+    if (!phoneKey) return;
 
-    // 2) Also pick up bookings made with this account's phone number, in case
-    // a booking used a different email than the account (or none at all).
     try {
-      const custSnap = await getDoc(doc(db, 'customers', user.uid));
-      const phoneKey = custSnap.exists() ? custSnap.data().phoneKey : null;
-      if (phoneKey) {
-        const idxSnap = await getDoc(doc(db, 'bookingsByPhone', phoneKey));
-        const numbers = idxSnap.exists() ? (idxSnap.data().bookingNumbers || []) : [];
-        numbers.forEach(num => {
-          if (bookingUnsubs[num]) return;
-          bookingUnsubs[num] = onSnapshot(doc(db, 'bookings', num), (snap) => {
-            if (snap.exists()) {
-              bookingsMap[snap.id] = { id: snap.id, ...snap.data() };
-              renderAll();
-            }
-          });
+      const idxSnap = await getDoc(doc(db, 'bookingsByPhone', phoneKey));
+      const numbers = idxSnap.exists() ? (idxSnap.data().bookingNumbers || []) : [];
+      numbers.forEach(num => {
+        if (bookingUnsubs[num]) return;
+        bookingUnsubs[num] = onSnapshot(doc(db, 'bookings', num), (snap) => {
+          if (snap.exists()) {
+            bookingsMap[snap.id] = { id: snap.id, ...snap.data() };
+            renderAll();
+          }
         });
-      }
+      });
     } catch (err) {
       console.error('phone bookings lookup failed', err);
     }
-  });
+  }
 
   function statusLabel(key){
     const s = STATUS_STEPS.find(s => s.key === key);
@@ -438,5 +502,6 @@
 
 <script type="module" src="chatbot.js"></script>
 <script src="capacitor-back.js"></script>
+<script src="app-tabs.js"></script>
 </body>
 </html>

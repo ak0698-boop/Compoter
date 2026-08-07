@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Account — Compoter</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F8F9FC; --paper-raised:#FFFFFF; --ink:#101820;
+    --indigo:#3730A3; --indigo-deep:#211D5C; --indigo-soft:#EDECFB;
+    --teal:#14B8A6; --red:#D6362C;
+    --steel:#57677A; --steel-light:#8A96A3; --line:#E2E6E4;
+    --display:'Space Grotesk', sans-serif; --body:'Inter', sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:var(--body); line-height:1.5;}
+  a{color:inherit; text-decoration:none;}
+  h1{font-family:var(--display); font-weight:700;}
+
+  .top{background:var(--indigo-deep); color:#fff; padding:22px 20px 28px;}
+  .top h1{font-size:19px;}
+  .avatar{
+    width:56px; height:56px; border-radius:50%; background:var(--teal); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700;
+    margin-bottom:12px;
+  }
+  .top .name{font-size:17px; font-weight:700;}
+  .top .phone{font-size:13px; color:#C6C2ED; margin-top:2px;}
+
+  .wrap{padding:20px;}
+  .card{background:var(--paper-raised); border:1px solid var(--line); border-radius:14px; overflow:hidden; margin-bottom:16px;}
+  .row{
+    display:flex; align-items:center; justify-content:space-between; padding:15px 18px;
+    border-bottom:1px solid var(--line); font-size:14px; font-weight:600;
+  }
+  .row:last-child{border-bottom:none;}
+  .row .chev{color:var(--steel-light);}
+
+  .btn-signout{
+    width:100%; background:#fff; border:1.5px solid var(--red); color:var(--red);
+    font-weight:600; font-size:14px; padding:13px; border-radius:10px; cursor:pointer;
+  }
+  .empty{padding:60px 20px; text-align:center; color:var(--steel-light); font-size:14px;}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="avatar" id="avatar-initial">?</div>
+  <div class="name" id="acc-name">Loading…</div>
+  <div class="phone" id="acc-phone"></div>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <a class="row" href="customer-login.html"><span>📋 My Bookings</span><span class="chev">›</span></a>
+    <a class="row" href="booking.html"><span>➕ Book a New Service</span><span class="chev">›</span></a>
+    <a class="row" href="contact.html"><span>💬 Help &amp; Support</span><span class="chev">›</span></a>
+  </div>
+
+  <button class="btn-signout" id="signout-btn">Sign Out</button>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { initializeFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA80s9jtewt93rsveqQyXD2xslm1chJuME",
+    authDomain: "expertinc-tools.firebaseapp.com",
+    projectId: "expertinc-tools",
+    storageBucket: "expertinc-tools.firebasestorage.app",
+    messagingSenderId: "86282664413",
+    appId: "1:86282664413:web:ec3374c7ffe1d99e70de34"
+  };
+
+  // Same named app as customer-login.html so the login session is shared.
+  const app = initializeApp(firebaseConfig, "compoter-customer");
+  const auth = getAuth(app);
+  const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+
+  document.getElementById('signout-btn').addEventListener('click', () => signOut(auth));
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = 'customer-login.html';
+      return;
+    }
+    document.getElementById('acc-phone').textContent = user.phoneNumber || '';
+    try {
+      const snap = await getDoc(doc(db, 'customers', user.uid));
+      const name = snap.exists() ? snap.data().name : null;
+      document.getElementById('acc-name').textContent = name || user.phoneNumber || 'Compoter Customer';
+      document.getElementById('avatar-initial').textContent = (name || '?').trim().charAt(0).toUpperCase() || '?';
+    } catch (err) {
+      console.error('profile lookup failed', err);
+      document.getElementById('acc-name').textContent = user.phoneNumber || 'Compoter Customer';
+    }
+  });
+</script>
+
+<script src="capacitor-back.js"></script>
+<script src="app-tabs.js"></script>
+</body>
+</html>

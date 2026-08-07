@@ -91,7 +91,15 @@
 </section>
 
 <div class="wrap">
-  <form id="booking-form">
+  <div id="location-step" style="text-align:center; padding:30px 0;">
+    <div style="font-size:40px; margin-bottom:14px;">📍</div>
+    <h2 style="font-size:19px; margin-bottom:20px;">Where do you want your service?</h2>
+    <button type="button" class="btn" id="use-current-location-btn" style="margin-bottom:12px;">Use My Current Location</button>
+    <button type="button" class="btn" id="enter-manually-btn" style="background:var(--paper-raised); color:var(--indigo); border:1.5px solid var(--indigo);">I'll Enter It Manually</button>
+    <p class="error-msg" id="location-msg" style="color:var(--steel);"></p>
+  </div>
+
+  <form id="booking-form" style="display:none;">
     <div class="form-row">
       <div class="field"><label for="b-name">Name</label><input type="text" id="b-name" required placeholder="Your name"></div>
       <div class="field"><label for="b-phone">Phone</label><input type="tel" id="b-phone" required placeholder="+91 98765 43210"></div>
@@ -197,7 +205,53 @@
     });
   }
 
+  async function reverseGeocode(lat, lng){
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14`, {
+        headers: { 'Accept-Language': 'en' }
+      });
+      const data = await res.json();
+      const a = data.address || {};
+      return a.suburb || a.neighbourhood || a.city_district || a.city || a.town || a.village || null;
+    } catch (e) {
+      console.error('reverse geocode failed', e);
+      return null;
+    }
+  }
+
+  let savedLocation = null;
+
+  const locationStep = document.getElementById('location-step');
+  const useCurrentLocationBtn = document.getElementById('use-current-location-btn');
+  const enterManuallyBtn = document.getElementById('enter-manually-btn');
+  const locationMsg = document.getElementById('location-msg');
   const form = document.getElementById('booking-form');
+
+  function showBookingForm(){
+    locationStep.style.display = 'none';
+    form.style.display = 'block';
+  }
+
+  useCurrentLocationBtn.addEventListener('click', async () => {
+    useCurrentLocationBtn.disabled = true;
+    useCurrentLocationBtn.textContent = 'Fetching location...';
+    locationMsg.style.display = 'block';
+    locationMsg.textContent = 'Please allow location access if asked.';
+    const loc = await getLocation();
+    if (loc) {
+      savedLocation = loc;
+      const place = await reverseGeocode(loc.lat, loc.lng);
+      if (place) document.getElementById('b-city').value = place;
+    } else {
+      locationMsg.textContent = 'Location nahi mil payi — address neeche khud bhar dena.';
+    }
+    showBookingForm();
+  });
+
+  enterManuallyBtn.addEventListener('click', () => {
+    showBookingForm();
+  });
+
   const submitBtn = document.getElementById('submit-btn');
   const errorMsg = document.getElementById('error-msg');
 
@@ -248,7 +302,7 @@
       const description = document.getElementById('b-desc').value.trim();
 
       const phoneKey = normalizePhone(phone);
-      const location = await getLocation();
+      const location = savedLocation;
 
       await setDoc(doc(db, "bookings", bookingNumber), {
         bookingNumber, name, phone, phoneKey, email, city, address, service, estimatedPrice, date, time, description,

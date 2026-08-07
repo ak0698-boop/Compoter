@@ -33,16 +33,26 @@
 
   /* LOGIN */
   #login-view{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;}
-  .login-card{background:var(--paper-raised); border:1px solid var(--line); border-radius:14px; padding:36px; width:100%; max-width:380px;}
+  .login-card{background:var(--paper-raised); border:1px solid var(--line); border-radius:14px; padding:36px; width:100%; max-width:420px;}
   .login-card h1{font-size:22px; margin-bottom:6px;}
   .login-card p.sub{color:var(--steel); font-size:13.5px; margin-bottom:24px;}
   .field{margin-bottom:16px;}
   .field label{font-size:13px; font-weight:600; display:block; margin-bottom:6px;}
-  .field input{
+  .field input, .field select, .field textarea{
     width:100%; background:var(--paper); border:1.5px solid var(--line); border-radius:8px; padding:11px 13px;
     font-family:var(--body); font-size:14px; color:var(--ink); outline:none;
   }
-  .field input:focus{border-color:var(--indigo);}
+  .field input:focus, .field select:focus, .field textarea:focus{border-color:var(--indigo);}
+  .field textarea{resize:vertical; min-height:70px;}
+  .phone-row{display:flex; gap:8px;}
+  .phone-prefix{
+    padding:11px 13px; background:var(--paper); border:1.5px solid var(--line); border-radius:8px;
+    font-weight:600; font-size:14px; display:flex; align-items:center;
+  }
+  .skills-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px;}
+  .skill-check{display:flex; align-items:center; gap:8px; background:var(--paper); border:1.5px solid var(--line); border-radius:8px; padding:9px 11px; cursor:pointer;}
+  .skill-check input{width:auto; margin:0;}
+  .skill-check label{margin:0; font-weight:500; font-size:13px; cursor:pointer;}
   .btn{
     font-family:var(--body); font-weight:600; font-size:14.5px; padding:12px 20px; border-radius:8px;
     cursor:pointer; border:none; width:100%; background:var(--teal); color:#fff;
@@ -53,6 +63,7 @@
   .msg.show{display:block;}
   .msg.err{background:#FBE9E7; color:var(--red);}
   .msg.info{background:var(--indigo-soft); color:var(--indigo);}
+  .change-link{display:block; text-align:center; margin-top:14px; font-size:13px; color:var(--indigo); font-weight:600;}
 
   /* DASHBOARD */
   #dashboard-view{display:none;}
@@ -99,14 +110,63 @@
 
 <div id="login-view">
   <div class="login-card">
-    <h1>Engineer Login</h1>
-    <p class="sub">Wahi email/password jo registration ke waqt banaya tha.</p>
-    <form id="login-form">
-      <div class="field"><label for="l-email">Email</label><input type="email" id="l-email" required placeholder="you@email.com"></div>
-      <div class="field"><label for="l-password">Password</label><input type="password" id="l-password" required placeholder="Password"></div>
-      <button type="submit" class="btn" id="login-btn">Sign In</button>
-      <p class="msg err" id="login-error"></p>
-    </form>
+
+    <div id="phone-step">
+      <h1>Engineer Login</h1>
+      <p class="sub">Apna phone number daalo, hum OTP bhejenge.</p>
+      <div class="field">
+        <label for="phone-input">Phone Number</label>
+        <div class="phone-row">
+          <span class="phone-prefix">+91</span>
+          <input type="tel" id="phone-input" placeholder="98765 43210" maxlength="10" inputmode="numeric" style="flex:1;">
+        </div>
+      </div>
+      <button class="btn" id="send-otp-btn">Send OTP</button>
+      <p class="msg err" id="phone-error"></p>
+    </div>
+
+    <div id="otp-step" style="display:none;">
+      <h1>Enter OTP</h1>
+      <p class="sub" id="otp-sub"></p>
+      <div class="field">
+        <label for="otp-input">6-digit OTP</label>
+        <input type="text" id="otp-input" placeholder="123456" maxlength="6" inputmode="numeric">
+      </div>
+      <button class="btn" id="verify-otp-btn">Verify &amp; Continue</button>
+      <p class="msg err" id="otp-error"></p>
+      <a href="#" class="change-link" id="change-number-link">Change number</a>
+    </div>
+
+    <div id="signup-step" style="display:none;">
+      <h1>Complete Your Profile</h1>
+      <p class="sub">Ye details hamari team verify karegi, uske baad hi jobs milni shuru hongi.</p>
+      <div class="field"><label for="s-name">Full Name</label><input type="text" id="s-name" placeholder="Your full name"></div>
+      <div class="field"><label for="s-city">City / Service Area</label><input type="text" id="s-city" placeholder="e.g. Noida, Delhi NCR"></div>
+      <div class="field"><label for="s-experience">Years of Experience</label><input type="number" id="s-experience" min="0" placeholder="e.g. 3"></div>
+      <div class="field">
+        <label>Skills / Areas of Expertise</label>
+        <div class="skills-grid">
+          <div class="skill-check"><input type="checkbox" id="skill-cyber" value="Cybersecurity"><label for="skill-cyber">Cybersecurity</label></div>
+          <div class="skill-check"><input type="checkbox" id="skill-hardware" value="Hardware"><label for="skill-hardware">Computer Hardware</label></div>
+          <div class="skill-check"><input type="checkbox" id="skill-network" value="Networking"><label for="skill-network">Networking</label></div>
+          <div class="skill-check"><input type="checkbox" id="skill-backup" value="Backup & Storage"><label for="skill-backup">Backup &amp; Storage</label></div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="s-id-type">ID Proof Type</label>
+        <select id="s-id-type">
+          <option value="Aadhar">Aadhar Card</option>
+          <option value="PAN">PAN Card</option>
+          <option value="Driving License">Driving License</option>
+        </select>
+      </div>
+      <div class="field"><label for="s-id-number">ID Proof Number</label><input type="text" id="s-id-number" placeholder="ID number"></div>
+      <div class="field"><label for="s-notes">Anything else? (optional)</label><textarea id="s-notes" placeholder="Certifications, availability, etc."></textarea></div>
+      <button class="btn" id="save-signup-btn">Submit for Verification</button>
+      <p class="msg err" id="signup-error"></p>
+    </div>
+
+    <div id="recaptcha-container"></div>
   </div>
 </div>
 
@@ -130,8 +190,8 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { initializeFirestore, doc, updateDoc, collection, query, where, onSnapshot, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { initializeFirestore, doc, addDoc, updateDoc, collection, query, where, onSnapshot, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyA80s9jtewt93rsveqQyXD2xslm1chJuME",
@@ -184,33 +244,142 @@
     }).catch(err => console.error('Client notification email failed:', err));
   }
 
+  // ---------- Phone + OTP auth ----------
   const loginView = document.getElementById('login-view');
   const dashboardView = document.getElementById('dashboard-view');
-  const loginForm = document.getElementById('login-form');
-  const loginBtn = document.getElementById('login-btn');
-  const loginError = document.getElementById('login-error');
+  const phoneStep = document.getElementById('phone-step');
+  const otpStep = document.getElementById('otp-step');
+  const signupStep = document.getElementById('signup-step');
+  const phoneInput = document.getElementById('phone-input');
+  const sendOtpBtn = document.getElementById('send-otp-btn');
+  const phoneError = document.getElementById('phone-error');
+  const otpInput = document.getElementById('otp-input');
+  const verifyOtpBtn = document.getElementById('verify-otp-btn');
+  const otpError = document.getElementById('otp-error');
+  const otpSub = document.getElementById('otp-sub');
+  const changeNumberLink = document.getElementById('change-number-link');
+  const saveSignupBtn = document.getElementById('save-signup-btn');
+  const signupError = document.getElementById('signup-error');
   const whoName = document.getElementById('who-name');
   const pendingBanner = document.getElementById('pending-banner');
   const jobsList = document.getElementById('jobs-list');
   const jobsEmpty = document.getElementById('jobs-empty');
 
-  function showLoginError(text){
-    loginError.textContent = text;
-    loginError.classList.add('show');
+  function showStep(step){
+    [phoneStep, otpStep, signupStep].forEach(s => s.style.display = 'none');
+    step.style.display = 'block';
   }
 
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    loginBtn.disabled = true;
-    loginBtn.textContent = 'Signing in...';
-    loginError.classList.remove('show');
+  function normalizePhone(phone){
+    return String(phone || '').replace(/\D/g, '').slice(-10);
+  }
+
+  let recaptchaVerifier = null;
+  function getRecaptcha(){
+    if (!recaptchaVerifier) {
+      recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+    }
+    return recaptchaVerifier;
+  }
+
+  let confirmationResult = null;
+
+  sendOtpBtn.addEventListener('click', async () => {
+    const digits = phoneInput.value.replace(/\D/g, '');
+    phoneError.classList.remove('show');
+    if (digits.length !== 10) {
+      phoneError.textContent = 'Sahi 10-digit phone number daalein.';
+      phoneError.classList.add('show');
+      return;
+    }
+    sendOtpBtn.disabled = true;
+    sendOtpBtn.textContent = 'Sending...';
     try {
-      await signInWithEmailAndPassword(auth, document.getElementById('l-email').value.trim(), document.getElementById('l-password').value);
+      const fullNumber = '+91' + digits;
+      confirmationResult = await signInWithPhoneNumber(auth, fullNumber, getRecaptcha());
+      otpSub.textContent = fullNumber + ' par OTP bheja gaya hai.';
+      otpInput.value = '';
+      showStep(otpStep);
+      otpInput.focus();
     } catch (err) {
       console.error(err);
-      showLoginError('Sign-in failed (' + (err.code || err.message) + ').');
-      loginBtn.disabled = false;
-      loginBtn.textContent = 'Sign In';
+      phoneError.textContent = 'OTP bhejne me dikkat (' + (err.code || err.message) + ').';
+      phoneError.classList.add('show');
+    } finally {
+      sendOtpBtn.disabled = false;
+      sendOtpBtn.textContent = 'Send OTP';
+    }
+  });
+
+  changeNumberLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    otpError.classList.remove('show');
+    showStep(phoneStep);
+  });
+
+  verifyOtpBtn.addEventListener('click', async () => {
+    const code = otpInput.value.trim();
+    otpError.classList.remove('show');
+    if (code.length !== 6) {
+      otpError.textContent = '6-digit OTP daalein.';
+      otpError.classList.add('show');
+      return;
+    }
+    verifyOtpBtn.disabled = true;
+    verifyOtpBtn.textContent = 'Verifying...';
+    try {
+      await confirmationResult.confirm(code);
+      // onAuthStateChanged takes over from here.
+    } catch (err) {
+      console.error(err);
+      otpError.textContent = 'Galat OTP (' + (err.code || err.message) + ').';
+      otpError.classList.add('show');
+      verifyOtpBtn.disabled = false;
+      verifyOtpBtn.textContent = 'Verify & Continue';
+    }
+  });
+
+  let pendingUser = null;
+
+  saveSignupBtn.addEventListener('click', async () => {
+    signupError.classList.remove('show');
+    const name = document.getElementById('s-name').value.trim();
+    const city = document.getElementById('s-city').value.trim();
+    const experience = document.getElementById('s-experience').value;
+    const idType = document.getElementById('s-id-type').value;
+    const idNumber = document.getElementById('s-id-number').value.trim();
+    const notes = document.getElementById('s-notes').value.trim();
+
+    if (!name || !city || !idNumber) {
+      signupError.textContent = 'Naam, city aur ID number zaroori hain.';
+      signupError.classList.add('show');
+      return;
+    }
+
+    const skills = [];
+    ['skill-cyber', 'skill-hardware', 'skill-network', 'skill-backup'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el.checked) skills.push(el.value);
+    });
+
+    saveSignupBtn.disabled = true;
+    saveSignupBtn.textContent = 'Submitting...';
+    try {
+      await addDoc(collection(db, 'engineers'), {
+        uid: pendingUser.uid,
+        name, city, experience, skills, idType, idNumber, notes,
+        phone: pendingUser.phoneNumber,
+        email: '',
+        status: 'pending',
+        createdAt: serverTimestamp()
+      });
+      await loadDashboard(pendingUser);
+    } catch (err) {
+      console.error(err);
+      signupError.textContent = 'Kuch gadbad ho gayi (' + (err.code || err.message) + ').';
+      signupError.classList.add('show');
+      saveSignupBtn.disabled = false;
+      saveSignupBtn.textContent = 'Submit for Verification';
     }
   });
 
@@ -281,8 +450,9 @@
     if (!user) {
       loginView.style.display = 'flex';
       dashboardView.style.display = 'none';
-      loginBtn.disabled = false;
-      loginBtn.textContent = 'Sign In';
+      showStep(phoneStep);
+      sendOtpBtn.disabled = false; sendOtpBtn.textContent = 'Send OTP';
+      verifyOtpBtn.disabled = false; verifyOtpBtn.textContent = 'Verify & Continue';
       return;
     }
 
@@ -291,19 +461,37 @@
       engSnap = await getDocs(query(collection(db, 'engineers'), where('uid', '==', user.uid)));
     } catch (err) {
       console.error(err);
-      showLoginError('Lookup failed (' + (err.code || err.message) + '). UID: ' + user.uid);
-      await signOut(auth);
-      return;
-    }
-    if (engSnap.empty) {
-      showLoginError('Engineer record not found. UID checked: ' + user.uid);
+      phoneError.textContent = 'Lookup failed (' + (err.code || err.message) + ').';
+      phoneError.classList.add('show');
       await signOut(auth);
       return;
     }
 
+    if (engSnap.empty) {
+      pendingUser = user;
+      loginView.style.display = 'flex';
+      dashboardView.style.display = 'none';
+      saveSignupBtn.disabled = false; saveSignupBtn.textContent = 'Submit for Verification';
+      showStep(signupStep);
+      return;
+    }
+
+    await loadDashboard(user);
+  });
+
+  async function loadDashboard(user){
+    let engSnap;
+    try {
+      engSnap = await getDocs(query(collection(db, 'engineers'), where('uid', '==', user.uid)));
+    } catch (err) {
+      console.error(err);
+      return;
+    }
+    if (engSnap.empty) return;
+
     const engineerDoc = engSnap.docs[0];
     const engineer = engineerDoc.data();
-    whoName.textContent = engineer.name || user.email;
+    whoName.textContent = engineer.name || user.phoneNumber;
     pendingBanner.classList.toggle('show', engineer.status !== 'active');
 
     loginView.style.display = 'none';
@@ -321,7 +509,7 @@
       },
       err => console.error('jobs listen failed', err)
     );
-  });
+  }
 
   let currentJobs = [];
 
