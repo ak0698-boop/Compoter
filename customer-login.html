@@ -19,7 +19,7 @@
     --display:'Space Grotesk', sans-serif; --body:'Inter', sans-serif; --mono:'IBM Plex Mono', monospace;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
-  body{background:var(--paper); color:var(--ink); font-family:var(--body); line-height:1.5;}
+  body{background:var(--paper); color:var(--ink); font-family:var(--body); line-height:1.5; visibility:hidden;}
   a{color:inherit; text-decoration:none;}
   h1,h2{font-family:var(--display); font-weight:700;}
 
@@ -345,6 +345,7 @@
       showStep(phoneStep);
       verifyOtpBtn.disabled = false; verifyOtpBtn.textContent = 'Verify & Continue';
       sendOtpBtn.disabled = false; sendOtpBtn.textContent = 'Send OTP';
+      document.body.style.visibility = 'visible';
       return;
     }
 
@@ -374,6 +375,7 @@
       nameError.classList.remove('show');
       saveNameBtn.disabled = false; saveNameBtn.textContent = 'Continue';
       showStep(nameStep);
+      document.body.style.visibility = 'visible';
       return;
     }
 
@@ -398,6 +400,7 @@
     whoName.textContent = name || user.phoneNumber;
     authView.style.display = 'none';
     dashboardView.style.display = 'block';
+    document.body.style.visibility = 'visible';
 
     const phoneKey = normalizePhone(user.phoneNumber);
     if (!phoneKey) return;
