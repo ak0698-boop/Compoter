@@ -74,6 +74,34 @@
 </head>
 <body>
 
+<script type="module">
+  // Auth gate: app-home.html is the app's landing screen, so check login
+  // status before anything else — first-time users get sent to sign in /
+  // sign up; returning users (Firebase persists the session) fall straight
+  // through to the home screen below.
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA80s9jtewt93rsveqQyXD2xslm1chJuME",
+    authDomain: "expertinc-tools.firebaseapp.com",
+    projectId: "expertinc-tools",
+    storageBucket: "expertinc-tools.firebasestorage.app",
+    messagingSenderId: "86282664413",
+    appId: "1:86282664413:web:ec3374c7ffe1d99e70de34"
+  };
+
+  // Same named app as customer-login.html so the login session is shared.
+  const authApp = initializeApp(firebaseConfig, "compoter-customer");
+  const auth = getAuth(authApp);
+
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      window.location.replace('customer-login.html');
+    }
+  });
+</script>
+
 <div class="location-bar">
   <div class="label">Service Location</div>
   <div class="value" id="location-value">📍 Fetching your location…<span class="chev">▾</span></div>
