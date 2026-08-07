@@ -244,12 +244,23 @@
       });
   }
 
+  // Desktop/laptop GPS readings can jitter and fire watchPosition's callback
+  // far more often than the position actually changes — write to Firestore
+  // at most once every 15s regardless, so it can't flood the connection and
+  // stall the rest of the browser.
+  const LOCATION_WRITE_INTERVAL_MS = 15000;
+  let lastWriteAt = 0;
+
   function startLocationTracking(engineerDocId){
     if (!navigator.geolocation) return;
     locationWatchId = navigator.geolocation.watchPosition(
       (pos) => {
         const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         lastKnownLocation = loc;
+
+        const now = Date.now();
+        if (now - lastWriteAt < LOCATION_WRITE_INTERVAL_MS) return;
+        lastWriteAt = now;
 
         updateDoc(doc(db, 'engineers', engineerDocId), {
           location: loc,
@@ -259,7 +270,7 @@
         pushLocationToActiveJobs(loc);
       },
       (err) => console.error('Geolocation error:', err),
-      { enableHighAccuracy: true, maximumAge: 60000, timeout: 15000 }
+      { enableHighAccuracy: false, maximumAge: 60000, timeout: 15000 }
     );
   }
 
