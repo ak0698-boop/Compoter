@@ -353,12 +353,19 @@
       custSnap = await withTimeout(getDoc(doc(db, 'customers', user.uid)), 20000, 'Profile load timed out.');
     } catch (err) {
       console.error('customer profile lookup failed', err);
-      otpError.textContent = 'Login ho gaya, lekin profile load karne me network dikkat (' + (err.code || err.message) + '). Dobara try ho raha hai...';
+      const alreadyRetried = sessionStorage.getItem('cptr-profile-retry') === '1';
+      otpError.textContent = alreadyRetried
+        ? 'Profile load nahi ho pa raha (' + (err.code || err.message) + '). Firestore rules check karein.'
+        : 'Login ho gaya, lekin profile load karne me dikkat (' + (err.code || err.message) + '). Dobara try ho raha hai...';
       otpError.classList.add('show');
       showStep(otpStep);
-      setTimeout(() => window.location.reload(), 2000);
+      if (!alreadyRetried) {
+        sessionStorage.setItem('cptr-profile-retry', '1');
+        setTimeout(() => window.location.reload(), 2000);
+      }
       return;
     }
+    sessionStorage.removeItem('cptr-profile-retry');
 
     if (!custSnap.exists()) {
       pendingUser = user;
