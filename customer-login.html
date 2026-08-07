@@ -347,7 +347,9 @@
     const engPos = [b.engineerLocation.lat, b.engineerLocation.lng];
 
     if (!liveMaps[b.id]) {
-      const map = L.map(containerId).setView(engPos, 13);
+      const map = L.map(containerId, { scrollWheelZoom: false }).setView(engPos, 13);
+      map.on('focus', () => map.scrollWheelZoom.enable());
+      map.on('blur', () => map.scrollWheelZoom.disable());
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors', maxZoom: 19,
       }).addTo(map);
@@ -422,9 +424,14 @@
     jobsList.innerHTML = bookings.map(buildCardHTML).join('');
 
     // The list above just replaced the DOM, so any previously-bound Leaflet
-    // maps are now attached to detached nodes — drop them and re-init fresh
-    // against the new containers (same ids, new elements).
-    Object.keys(liveMaps).forEach(k => delete liveMaps[k]);
+    // maps are now attached to detached nodes — properly dispose each one
+    // (map.remove() tears down its event listeners/tiles) before dropping
+    // the reference, otherwise they leak and the page grinds to a halt after
+    // a few live-location updates.
+    Object.keys(liveMaps).forEach(k => {
+      try { liveMaps[k].map.remove(); } catch (e) {}
+      delete liveMaps[k];
+    });
     bookings.forEach(b => renderLiveMap(b));
   }
 </script>
