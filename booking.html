@@ -147,6 +147,7 @@
     <div class="field" id="addons-field" style="display:none;">
       <label>Select what you need (optional — helps the engineer come prepared)</label>
       <div id="addons-list"></div>
+      <p style="font-size:12px; color:var(--steel-light); margin-top:6px;">Prices shown are starting estimates — the exact price depends on your device's brand/model and is confirmed by the engineer after inspection.</p>
     </div>
 
     <div class="price-breakdown">
@@ -346,7 +347,7 @@
       <div class="addon-row" data-id="${item.id}">
         <div>
           <div class="addon-name">${esc(item.name)}</div>
-          <div class="addon-price">₹${item.price.toLocaleString('en-IN')}</div>
+          <div class="addon-price">Starting ₹${item.price.toLocaleString('en-IN')}</div>
         </div>
         <div>
           ${addonQty[item.id] ? `
