@@ -104,6 +104,40 @@
   }
 
   .empty{padding:60px 20px; text-align:center; color:var(--steel-light); font-size:14px;}
+
+  /* PROFILE TAB */
+  .tab-switch{display:flex; gap:8px; padding:14px 28px 0; max-width:760px; margin:0 auto;}
+  .tab-btn{
+    flex:1; background:var(--paper-raised); border:1.5px solid var(--line); border-radius:9px;
+    padding:10px; font-family:var(--body); font-weight:600; font-size:13.5px; color:var(--steel);
+    cursor:pointer;
+  }
+  .tab-btn.active{background:var(--indigo); border-color:var(--indigo); color:#fff;}
+
+  .profile-top{display:flex; justify-content:center; padding:22px 0 6px;}
+  .avatar-wrap{position:relative; width:72px; height:72px;}
+  .avatar{
+    width:72px; height:72px; border-radius:50%; background:var(--teal); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:700;
+    overflow:hidden;
+  }
+  .avatar img{width:100%; height:100%; object-fit:cover;}
+  .avatar-edit-btn{
+    position:absolute; bottom:-2px; right:-2px; width:26px; height:26px; border-radius:50%;
+    background:#fff; border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
+    font-size:13px; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,0.2);
+  }
+  .card{background:var(--paper-raised); border:1px solid var(--line); border-radius:14px; overflow:hidden; margin-top:16px;}
+  .row{
+    display:flex; align-items:center; justify-content:space-between; padding:14px 18px;
+    border-bottom:1px solid var(--line); font-size:14px; font-weight:600;
+  }
+  .row:last-child{border-bottom:none;}
+  .row.editable{cursor:pointer;}
+  .row .label-col{display:flex; flex-direction:column; gap:2px;}
+  .row .val{font-size:12.5px; font-weight:500; color:var(--steel);}
+  .row .val.required{color:var(--amber);}
+  .row .chev{color:var(--steel-light); font-size:16px;}
 </style>
 </head>
 <body>
@@ -179,19 +213,64 @@
     </div>
   </div>
 
-  <div class="wrap">
+  <div class="tab-switch">
+    <button class="tab-btn active" id="tab-jobs-btn" type="button">🔧 Jobs</button>
+    <button class="tab-btn" id="tab-profile-btn" type="button">👤 Profile</button>
+  </div>
+
+  <div class="wrap" id="jobs-section">
     <div class="pending-banner" id="pending-banner">
       Aapka account abhi verify ho raha hai — jab Compoter team approve kar degi, tab aapko jobs milni shuru hongi.
     </div>
     <div id="jobs-list"></div>
     <div class="empty" id="jobs-empty" style="display:none;">Abhi koi job assign nahi hui hai.</div>
   </div>
+
+  <div class="wrap" id="profile-section" style="display:none;">
+    <div class="profile-top">
+      <div class="avatar-wrap">
+        <div class="avatar" id="avatar-circle"><span id="avatar-initial">?</span><img id="avatar-photo" style="display:none;"></div>
+        <button class="avatar-edit-btn" id="avatar-edit-btn" type="button" title="Change photo">📷</button>
+      </div>
+    </div>
+    <input type="file" id="photo-input" accept="image/*" style="display:none;">
+
+    <div class="card">
+      <div class="row editable" data-field="name">
+        <span class="label-col">👤 Name<span class="val" id="f-name">—</span></span>
+        <span class="chev">›</span>
+      </div>
+      <div class="row"><span class="label-col">📞 Phone Number<span class="val" id="f-phone">—</span></span></div>
+      <div class="row editable" data-field="email">
+        <span class="label-col">✉️ Email<span class="val" id="f-email">Required</span></span>
+        <span class="chev">›</span>
+      </div>
+      <div class="row editable" data-field="gender">
+        <span class="label-col">⚧ Gender<span class="val" id="f-gender">Required</span></span>
+        <span class="chev">›</span>
+      </div>
+      <div class="row editable" data-field="dob">
+        <span class="label-col">🎂 Date of Birth<span class="val" id="f-dob">Required</span></span>
+        <span class="chev">›</span>
+      </div>
+      <div class="row"><span class="label-col">🏅 Member Since<span class="val" id="f-member-since">—</span></span></div>
+      <div class="row editable" data-field="emergencyContact">
+        <span class="label-col">🚨 Emergency Contact<span class="val" id="f-emergency">Required</span></span>
+        <span class="chev">›</span>
+      </div>
+      <div class="row"><span class="label-col">🏙️ City<span class="val" id="f-city">—</span></span></div>
+      <div class="row"><span class="label-col">✅ Verification Status<span class="val" id="f-status">—</span></span></div>
+    </div>
+  </div>
+
+  <input type="date" id="dob-input" style="position:absolute; opacity:0; pointer-events:none; width:1px; height:1px;">
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import { initializeFirestore, doc, addDoc, updateDoc, collection, query, where, onSnapshot, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyA80s9jtewt93rsveqQyXD2xslm1chJuME",
@@ -212,6 +291,7 @@
   // default QUIC/WebChannel connection, which silently rolls back optimistic
   // local writes (a click appears to work, then reverts) until it resyncs.
   const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+  const storage = getStorage(app);
 
   emailjs.init({ publicKey: "mMqKhug76RFv2VLxB" });
 
@@ -498,6 +578,11 @@
     loginView.style.display = 'none';
     dashboardView.style.display = 'block';
 
+    currentEngineerDocId = engineerDoc.id;
+    currentEngineerUser = user;
+    currentEngineerProfile = engineer;
+    renderProfileView();
+
     startLocationTracking(engineerDoc.id);
 
     jobsUnsub = onSnapshot(
@@ -565,6 +650,120 @@
     } catch (err) {
       console.error('Status update failed:', err);
       btn.disabled = false;
+    }
+  });
+
+  // ---------- Profile tab ----------
+  let currentEngineerDocId = null;
+  let currentEngineerUser = null;
+  let currentEngineerProfile = {};
+
+  const jobsSection = document.getElementById('jobs-section');
+  const profileSection = document.getElementById('profile-section');
+  const tabJobsBtn = document.getElementById('tab-jobs-btn');
+  const tabProfileBtn = document.getElementById('tab-profile-btn');
+
+  tabJobsBtn.addEventListener('click', () => {
+    tabJobsBtn.classList.add('active');
+    tabProfileBtn.classList.remove('active');
+    jobsSection.style.display = 'block';
+    profileSection.style.display = 'none';
+  });
+  tabProfileBtn.addEventListener('click', () => {
+    tabProfileBtn.classList.add('active');
+    tabJobsBtn.classList.remove('active');
+    profileSection.style.display = 'block';
+    jobsSection.style.display = 'none';
+  });
+
+  function fmtMemberSince(createdAt){
+    if (!createdAt) return '—';
+    const d = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
+    if (isNaN(d)) return '—';
+    return d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+  }
+
+  function setRow(id, value){
+    const el = document.getElementById(id);
+    if (value) {
+      el.textContent = value;
+      el.classList.remove('required');
+    } else {
+      el.textContent = 'Required';
+      el.classList.add('required');
+    }
+  }
+
+  function renderProfileView(){
+    const p = currentEngineerProfile;
+    setRow('f-name', p.name);
+    setRow('f-email', p.email);
+    setRow('f-gender', p.gender);
+    setRow('f-dob', p.dob);
+    setRow('f-emergency', p.emergencyContact);
+    document.getElementById('f-phone').textContent = currentEngineerUser.phoneNumber || '—';
+    document.getElementById('f-member-since').textContent = fmtMemberSince(p.createdAt);
+    document.getElementById('f-city').textContent = p.city || '—';
+    document.getElementById('f-status').textContent = p.status === 'active' ? '✅ Verified' : 'Pending verification';
+
+    const initialEl = document.getElementById('avatar-initial');
+    const photoEl = document.getElementById('avatar-photo');
+    if (p.photoURL) {
+      photoEl.src = p.photoURL;
+      photoEl.style.display = 'block';
+      initialEl.style.display = 'none';
+    } else {
+      photoEl.style.display = 'none';
+      initialEl.style.display = 'block';
+      initialEl.textContent = (p.name || '?').trim().charAt(0).toUpperCase() || '?';
+    }
+  }
+
+  async function saveProfileField(field, value){
+    await updateDoc(doc(db, 'engineers', currentEngineerDocId), { [field]: value });
+    currentEngineerProfile[field] = value;
+    renderProfileView();
+  }
+
+  document.querySelectorAll('#profile-section .row.editable').forEach(row => {
+    row.addEventListener('click', () => {
+      const field = row.dataset.field;
+      if (field === 'dob') {
+        const dobInput = document.getElementById('dob-input');
+        dobInput.showPicker ? dobInput.showPicker() : dobInput.click();
+        return;
+      }
+      const label = field === 'emergencyContact' ? 'Emergency contact number'
+        : field === 'gender' ? 'Gender (Male / Female / Other)'
+        : field.charAt(0).toUpperCase() + field.slice(1);
+      const value = prompt(label + ' likhein:', currentEngineerProfile[field] || '');
+      if (value === null) return;
+      const trimmed = value.trim();
+      if (!trimmed) return;
+      saveProfileField(field, trimmed);
+    });
+  });
+
+  document.getElementById('dob-input').addEventListener('change', (e) => {
+    if (e.target.value) saveProfileField('dob', e.target.value);
+  });
+
+  document.getElementById('avatar-edit-btn').addEventListener('click', () => {
+    document.getElementById('photo-input').click();
+  });
+
+  document.getElementById('photo-input').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { alert('Photo 5MB se chhoti honi chahiye.'); return; }
+    try {
+      const photoRef = ref(storage, `profile-photos/engineer/${currentEngineerUser.uid}`);
+      await uploadBytes(photoRef, file);
+      const url = await getDownloadURL(photoRef);
+      await saveProfileField('photoURL', url);
+    } catch (err) {
+      console.error('photo upload failed', err);
+      alert('Photo upload nahi ho paya (' + (err.code || err.message) + ').');
     }
   });
 </script>
