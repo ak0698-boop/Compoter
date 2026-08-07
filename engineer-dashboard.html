@@ -309,7 +309,8 @@
     loginView.style.display = 'none';
     dashboardView.style.display = 'block';
 
-    startLocationTracking(engineerDoc.id);
+    // TEMP DEBUG: location tracking disabled to isolate the "page stuck" bug.
+    // startLocationTracking(engineerDoc.id);
 
     jobsUnsub = onSnapshot(
       query(collection(db, 'bookings'), where('assignedEngineerUid', '==', user.uid)),
