@@ -361,7 +361,21 @@
     await loadDashboard(user, custSnap.data().name);
   });
 
+  let appChromeLoaded = false;
+  function loadAppChrome(){
+    if (appChromeLoaded) return;
+    appChromeLoaded = true;
+    const tabs = document.createElement('script');
+    tabs.src = 'app-tabs.js';
+    document.body.appendChild(tabs);
+    const bot = document.createElement('script');
+    bot.type = 'module';
+    bot.src = 'chatbot.js';
+    document.body.appendChild(bot);
+  }
+
   async function loadDashboard(user, name){
+    loadAppChrome();
     whoName.textContent = name || user.phoneNumber;
     authView.style.display = 'none';
     dashboardView.style.display = 'block';
@@ -500,8 +514,6 @@
   }
 </script>
 
-<script type="module" src="chatbot.js"></script>
 <script src="capacitor-back.js"></script>
-<script src="app-tabs.js"></script>
 </body>
 </html>

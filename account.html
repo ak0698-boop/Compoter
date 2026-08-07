@@ -17,7 +17,7 @@
     --display:'Space Grotesk', sans-serif; --body:'Inter', sans-serif;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
-  body{background:var(--paper); color:var(--ink); font-family:var(--body); line-height:1.5;}
+  body{background:var(--paper); color:var(--ink); font-family:var(--body); line-height:1.5; visibility:hidden;}
   a{color:inherit; text-decoration:none;}
   h1{font-family:var(--display); font-weight:700;}
 
@@ -88,9 +88,10 @@
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
-      window.location.href = 'customer-login.html';
+      window.location.replace('customer-login.html');
       return;
     }
+    document.body.style.visibility = 'visible';
     document.getElementById('acc-phone').textContent = user.phoneNumber || '';
     try {
       const snap = await getDoc(doc(db, 'customers', user.uid));
