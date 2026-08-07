@@ -80,7 +80,7 @@
   // sign up; returning users (Firebase persists the session) fall straight
   // through to the home screen below.
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyA80s9jtewt93rsveqQyXD2xslm1chJuME",
@@ -94,6 +94,7 @@
   // Same named app as customer-login.html so the login session is shared.
   const authApp = initializeApp(firebaseConfig, "compoter-customer");
   const auth = getAuth(authApp);
+  await setPersistence(auth, browserLocalPersistence);
 
   onAuthStateChanged(auth, (user) => {
     if (!user) {

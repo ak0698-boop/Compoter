@@ -67,7 +67,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getAuth, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import { initializeFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -82,6 +82,7 @@
   // Same named app as customer-login.html so the login session is shared.
   const app = initializeApp(firebaseConfig, "compoter-customer");
   const auth = getAuth(app);
+  await setPersistence(auth, browserLocalPersistence);
   const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
 
   document.getElementById('signout-btn').addEventListener('click', () => signOut(auth));

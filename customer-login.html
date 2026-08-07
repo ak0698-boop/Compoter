@@ -159,7 +159,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import { initializeFirestore, doc, getDoc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -174,6 +174,7 @@
   // Named app so its login session doesn't collide with admin.html / engineer-dashboard.html
   const app = initializeApp(firebaseConfig, "compoter-customer");
   const auth = getAuth(app);
+  await setPersistence(auth, browserLocalPersistence);
   const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
 
   function withTimeout(promise, ms, message){
