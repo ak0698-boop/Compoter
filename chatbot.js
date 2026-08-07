@@ -57,7 +57,7 @@ function injectStyles(){
   const style = document.createElement('style');
   style.textContent = `
     #cptr-chat-fab{
-      position:fixed; right:20px; bottom:20px; z-index:9999; display:flex; align-items:center; gap:8px;
+      position:fixed; left:20px; bottom:84px; z-index:9999; display:flex; align-items:center; gap:8px;
       background:var(--indigo,#3730A3); color:#fff; border:none; border-radius:999px; padding:14px 18px;
       font-family:var(--body,'Inter',sans-serif); font-weight:600; font-size:14px; cursor:pointer;
       box-shadow:0 8px 24px rgba(0,0,0,0.2); transition:transform .15s ease;
@@ -65,7 +65,7 @@ function injectStyles(){
     #cptr-chat-fab:hover{ transform:translateY(-2px); }
     #cptr-chat-fab .cptr-emoji{ font-size:18px; }
     #cptr-chat-panel{
-      position:fixed; right:20px; bottom:88px; z-index:9999; width:340px; max-width:calc(100vw - 40px);
+      position:fixed; left:20px; bottom:152px; z-index:9999; width:340px; max-width:calc(100vw - 40px);
       height:460px; max-height:calc(100vh - 140px); background:var(--paper-raised,#fff); border:1px solid var(--line,#E2E6E4);
       border-radius:14px; box-shadow:0 16px 48px rgba(0,0,0,0.25); display:flex; flex-direction:column; overflow:hidden;
       font-family:var(--body,'Inter',sans-serif);
