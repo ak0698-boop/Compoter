@@ -180,6 +180,7 @@
   }
   @media (max-width:560px){
     .steps-grid{grid-template-columns:1fr;}
+    .nav{flex-wrap:wrap; height:auto; padding-top:10px; padding-bottom:10px; gap:8px;}
   }
 </style>
 </head>
@@ -193,10 +194,12 @@
       <a href="#how-it-works">How It Works</a>
       <a href="engineer-register.html">Become an Engineer</a>
       <a href="contact.html">Contact</a>
-      <a href="customer-login.html">My Bookings</a>
-      <a href="engineer-dashboard.html">Engineer Login</a>
     </nav>
-    <a href="booking.html" class="btn btn-primary btn-small">Book Service</a>
+    <div style="display:flex; align-items:center; gap:14px;">
+      <a href="customer-login.html" style="font-size:13.5px; font-weight:600; color:var(--indigo);">My Bookings</a>
+      <a href="engineer-dashboard.html" style="font-size:13.5px; font-weight:600; color:var(--indigo);">Engineer Login</a>
+      <a href="booking.html" class="btn btn-primary btn-small">Book Service</a>
+    </div>
   </div>
 </header>
 
@@ -374,5 +377,6 @@
 </footer>
 
 <script type="module" src="chatbot.js"></script>
+<script src="capacitor-back.js"></script>
 </body>
 </html>
