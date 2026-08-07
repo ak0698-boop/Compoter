@@ -191,13 +191,28 @@
   if (!navigator.geolocation) {
     setLocationText('Location not available — tap to enter manually');
   } else {
+    let locationSettled = false;
+    const fallbackTimer = setTimeout(() => {
+      if (locationSettled) return;
+      locationSettled = true;
+      setLocationText('Tap to set your location');
+    }, 12000);
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
+        if (locationSettled) return;
+        locationSettled = true;
+        clearTimeout(fallbackTimer);
         const name = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
         setLocationText(name || 'Current location');
       },
-      () => setLocationText('Tap to set your location'),
-      { timeout: 10000 }
+      () => {
+        if (locationSettled) return;
+        locationSettled = true;
+        clearTimeout(fallbackTimer);
+        setLocationText('Tap to set your location');
+      },
+      { timeout: 10000, enableHighAccuracy: false, maximumAge: 60000 }
     );
   }
 
