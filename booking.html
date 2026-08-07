@@ -69,6 +69,14 @@
   }
   .error-msg{color:var(--red); font-size:13.5px; margin-top:10px; display:none;}
 
+  .addon-row{display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border:1px solid var(--line); border-radius:8px; margin-bottom:8px; background:var(--paper-raised);}
+  .addon-row .addon-name{font-size:13.5px; font-weight:600;}
+  .addon-row .addon-price{font-size:12.5px; color:var(--steel); margin-top:2px;}
+  .addon-add-btn{background:var(--indigo-soft); color:var(--indigo); border:none; border-radius:7px; padding:8px 14px; font-weight:600; font-size:13px; cursor:pointer;}
+  .addon-qty{display:flex; align-items:center; gap:10px;}
+  .addon-qty button{width:26px; height:26px; border-radius:6px; border:1px solid var(--line); background:#fff; cursor:pointer; font-weight:700; font-size:14px;}
+  .addon-qty span{min-width:16px; text-align:center; font-weight:600; font-size:13.5px;}
+
   @media (max-width:560px){
     .page-head{padding:120px 0 20px;}
     .form-row{grid-template-columns:1fr;}
@@ -130,6 +138,12 @@
         <option value="Other" data-price="">Not Sure — Please Advise</option>
       </select>
       <div id="price-display" style="margin-top:10px; padding:12px 14px; background:var(--indigo-soft); border-radius:8px; font-size:14px; font-weight:600; color:var(--indigo);"></div>
+    </div>
+
+    <div class="field" id="addons-field" style="display:none;">
+      <label>Select what you need (optional — helps the engineer come prepared)</label>
+      <div id="addons-list"></div>
+      <div id="addons-summary" style="margin-top:4px; padding:12px 14px; background:var(--indigo-soft); border-radius:8px; font-size:14px; font-weight:600; color:var(--indigo); display:none;"></div>
     </div>
 
     <div class="form-row">
@@ -259,6 +273,83 @@
   const submitBtn = document.getElementById('submit-btn');
   const errorMsg = document.getElementById('error-msg');
 
+  // Rate-card style add-on items, shown alongside a service's flat diagnostic
+  // charge so customers can pick specific repairs upfront. Item names/prices
+  // here are our own generic list — not copied from any third party.
+  const ADDONS = {
+    Computer: [
+      { id: 'screen',   name: 'Screen Replacement',              price: 1499 },
+      { id: 'keyboard', name: 'Keyboard Replacement',             price: 899 },
+      { id: 'battery',  name: 'Battery Replacement',              price: 1299 },
+      { id: 'ram',      name: 'RAM Upgrade',                      price: 1999 },
+      { id: 'storage',  name: 'Hard Drive / SSD Replacement',     price: 2499 },
+      { id: 'os',       name: 'OS Installation / Reinstallation', price: 499 },
+      { id: 'virus',    name: 'Virus & Malware Removal',          price: 399 },
+      { id: 'data',     name: 'Data Backup & Transfer',           price: 599 },
+      { id: 'cleaning', name: 'Cooling Fan Cleaning',              price: 349 }
+    ]
+  };
+  let addonQty = {};
+
+  function esc(str){
+    return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function updateAddonsSummary(items){
+    const summary = document.getElementById('addons-summary');
+    const selected = items.filter(i => addonQty[i.id] > 0);
+    if (!selected.length) { summary.style.display = 'none'; return; }
+    const total = selected.reduce((sum, i) => sum + i.price * addonQty[i.id], 0);
+    const count = selected.reduce((sum, i) => sum + addonQty[i.id], 0);
+    summary.style.display = 'block';
+    summary.textContent = count + ' item' + (count > 1 ? 's' : '') + ' selected — estimated add-on total: ₹' + total.toLocaleString('en-IN');
+  }
+
+  function renderAddons(serviceValue){
+    const field = document.getElementById('addons-field');
+    const list = document.getElementById('addons-list');
+    const items = ADDONS[serviceValue];
+    if (!items) {
+      field.style.display = 'none';
+      addonQty = {};
+      return;
+    }
+    field.style.display = 'block';
+    list.innerHTML = items.map(item => `
+      <div class="addon-row" data-id="${item.id}">
+        <div>
+          <div class="addon-name">${esc(item.name)}</div>
+          <div class="addon-price">₹${item.price.toLocaleString('en-IN')}</div>
+        </div>
+        <div>
+          ${addonQty[item.id] ? `
+            <div class="addon-qty">
+              <button type="button" class="addon-minus">−</button>
+              <span>${addonQty[item.id]}</span>
+              <button type="button" class="addon-plus">+</button>
+            </div>
+          ` : `<button type="button" class="addon-add-btn">+ Add</button>`}
+        </div>
+      </div>
+    `).join('');
+    updateAddonsSummary(items);
+  }
+
+  document.getElementById('addons-list').addEventListener('click', (e) => {
+    const row = e.target.closest('.addon-row');
+    if (!row) return;
+    const id = row.dataset.id;
+    if (e.target.classList.contains('addon-add-btn')) {
+      addonQty[id] = 1;
+    } else if (e.target.classList.contains('addon-plus')) {
+      addonQty[id] = (addonQty[id] || 0) + 1;
+    } else if (e.target.classList.contains('addon-minus')) {
+      addonQty[id] = (addonQty[id] || 0) - 1;
+      if (addonQty[id] <= 0) delete addonQty[id];
+    }
+    renderAddons(document.getElementById('b-service').value);
+  });
+
   window.updatePrice = function(){
     const select = document.getElementById('b-service');
     const opt = select.options[select.selectedIndex];
@@ -272,6 +363,7 @@
     } else {
       display.textContent = "We'll share a quote after understanding your requirement.";
     }
+    renderAddons(select.value);
   };
 
   // Preselect service from URL, e.g. booking.html?service=CCTV
@@ -305,11 +397,17 @@
       const time = document.getElementById('b-time').value;
       const description = document.getElementById('b-desc').value.trim();
 
+      const addonItems = ADDONS[serviceSelect.value] || [];
+      const addOns = addonItems
+        .filter(i => addonQty[i.id] > 0)
+        .map(i => ({ name: i.name, price: i.price, qty: addonQty[i.id] }));
+      const addOnsTotal = addOns.reduce((sum, i) => sum + i.price * i.qty, 0);
+
       const phoneKey = normalizePhone(phone);
       const location = savedLocation;
 
       await setDoc(doc(db, "bookings", bookingNumber), {
-        bookingNumber, name, phone, phoneKey, email, city, address, service, estimatedPrice, date, time, description,
+        bookingNumber, name, phone, phoneKey, email, city, address, service, estimatedPrice, addOns, addOnsTotal, date, time, description,
         status: 'pending',
         assignedEngineer: '',
         assignedEngineerPhone: '',
@@ -325,6 +423,10 @@
         bookingNumbers: arrayUnion(bookingNumber)
       }, { merge: true });
 
+      const addOnsText = addOns.length
+        ? `\n\nItems selected:\n` + addOns.map(i => `- ${i.name} x${i.qty} (₹${i.price * i.qty})`).join('\n') + `\nAdd-on total: ₹${addOnsTotal.toLocaleString('en-IN')}`
+        : '';
+
       emailjs.send("service_p4lpxi5", "template_7lziz6o", {
         ticket_number: bookingNumber,
         client_name: name,
@@ -332,7 +434,7 @@
         client_email: email,
         client_company: city,
         priority: service,
-        issue_message: `Address: ${address}\nPreferred: ${date || 'Any date'} — ${time}\n\n${description}`
+        issue_message: `Address: ${address}\nPreferred: ${date || 'Any date'} — ${time}\n\n${description}${addOnsText}`
       }).catch(err => console.error("Notification email failed:", err));
 
       document.getElementById('booking-number').textContent = bookingNumber;
