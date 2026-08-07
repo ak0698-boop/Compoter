@@ -101,8 +101,8 @@
   <div class="auth-card">
 
     <div id="phone-step">
-      <h1>Track Your Bookings</h1>
-      <p class="sub">Apna phone number daalo, hum OTP bhejenge.</p>
+      <h1>Login / Sign Up</h1>
+      <p class="sub">Apna phone number daalo, hum OTP bhejenge — naya number ho to account bhi ban jayega.</p>
       <div class="field">
         <label for="phone-input">Phone Number</label>
         <div class="phone-row">
@@ -175,6 +175,13 @@
   const app = initializeApp(firebaseConfig, "compoter-customer");
   const auth = getAuth(app);
   const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+
+  function withTimeout(promise, ms, message){
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms))
+    ]);
+  }
 
   function normalizePhone(phone){
     return String(phone || '').replace(/\D/g, '').slice(-10);
@@ -267,11 +274,11 @@
     verifyOtpBtn.disabled = true;
     verifyOtpBtn.textContent = 'Verifying...';
     try {
-      await confirmationResult.confirm(code);
+      await withTimeout(confirmationResult.confirm(code), 20000, 'Verify timed out — try again.');
       // onAuthStateChanged takes over from here.
     } catch (err) {
       console.error(err);
-      otpError.textContent = 'Galat OTP (' + (err.code || err.message) + ').';
+      otpError.textContent = 'Galat OTP ya network dikkat (' + (err.code || err.message) + '). Dobara try karo.';
       otpError.classList.add('show');
       verifyOtpBtn.disabled = false;
       verifyOtpBtn.textContent = 'Verify & Continue';
@@ -342,9 +349,13 @@
 
     let custSnap;
     try {
-      custSnap = await getDoc(doc(db, 'customers', user.uid));
+      custSnap = await withTimeout(getDoc(doc(db, 'customers', user.uid)), 20000, 'Profile load timed out.');
     } catch (err) {
       console.error('customer profile lookup failed', err);
+      otpError.textContent = 'Login ho gaya, lekin profile load karne me network dikkat (' + (err.code || err.message) + '). Dobara try ho raha hai...';
+      otpError.classList.add('show');
+      showStep(otpStep);
+      setTimeout(() => window.location.reload(), 2000);
       return;
     }
 
