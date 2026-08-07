@@ -129,23 +129,25 @@
   .step-card p{font-size:13.5px; color:var(--steel);}
 
   /* SERVICES */
-  .services-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px;}
+  .services-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:18px;}
   .service-tile{
-    display:block;
-    background:var(--paper-raised); border:1px solid var(--line); border-radius:14px; padding:24px;
+    display:block; position:relative; overflow:hidden;
+    background:var(--paper-raised); border:1px solid var(--line); border-top:3px solid var(--accent, var(--indigo));
+    border-radius:14px; padding:24px;
     transition:transform .2s, box-shadow .2s;
   }
-  .service-tile:hover{transform:translateY(-3px); box-shadow:0 14px 30px rgba(55,48,163,0.08);}
+  .service-tile:hover{transform:translateY(-4px); box-shadow:0 16px 34px rgba(20,20,50,0.1);}
   .service-tile .icon-badge{
-    width:42px; height:42px; border-radius:11px; background:var(--indigo-soft); display:flex; align-items:center; justify-content:center; margin-bottom:16px;
+    width:56px; height:56px; border-radius:16px; background:var(--accent-soft, var(--indigo-soft));
+    display:flex; align-items:center; justify-content:center; margin-bottom:18px;
   }
-  .service-tile .icon-badge svg{width:22px; height:22px; stroke:var(--indigo);}
+  .service-tile .icon-badge svg{width:28px; height:28px; stroke:var(--accent, var(--indigo));}
   .service-tile h3{font-size:15.5px; margin-bottom:6px;}
-  .service-tile p{font-size:13px; color:var(--steel); margin-bottom:14px;}
+  .service-tile p{font-size:13px; color:var(--steel); margin-bottom:16px; line-height:1.55;}
   .service-tile .price-row{display:flex; align-items:center; justify-content:space-between; padding-top:14px; border-top:1px solid var(--line);}
-  .service-tile .price{font-family:var(--display); font-weight:700; font-size:15px; color:var(--indigo);}
+  .service-tile .price{font-family:var(--display); font-weight:700; font-size:15px; color:var(--accent, var(--indigo));}
   .service-tile .price span{font-family:var(--mono); font-size:10.5px; font-weight:500; color:var(--steel-light); text-transform:uppercase; display:block; margin-bottom:2px;}
-  .service-tile .book-link{font-size:12.5px; font-weight:600; color:var(--teal);}
+  .service-tile .book-link{font-size:12.5px; font-weight:600; color:var(--accent, var(--teal));}
 
   /* DUAL CTA */
   .dual-cta{display:grid; grid-template-columns:1fr 1fr; gap:24px;}
@@ -266,64 +268,64 @@
       <p>From a single broken laptop to a full office network — book it here.</p>
     </div>
     <div class="services-grid">
-      <a href="booking.html?service=Computer" class="service-tile">
+      <a href="booking.html?service=Computer" class="service-tile" style="--accent:#3730A3; --accent-soft:#EDECFB;">
         <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="14" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="0.5"/><path d="M12 2 V5 M12 19 V22 M2 12 H5 M19 12 H22"/></svg></div>
         <h3>Computer &amp; Laptop Repair</h3>
-        <p>Hardware faults, slow performance, virus removal.</p>
+        <p>Slow performance, hardware faults, virus removal, screen or keyboard replacement — sorted at your desk.</p>
         <div class="price-row"><div class="price"><span>Diagnostic Charge</span>₹599</div><div class="book-link">Book →</div></div>
       </a>
-      <a href="booking.html?service=Printer" class="service-tile">
+      <a href="booking.html?service=Printer" class="service-tile" style="--accent:#0369A1; --accent-soft:#E0F2FE;">
         <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="16" height="10" rx="1.5"/><path d="M8 20 H16 M12 16 V20"/></svg></div>
         <h3>Printer Repair</h3>
-        <p>Setup, jams, driver issues, network printing.</p>
+        <p>Setup, paper jams, driver conflicts, network printing — working again the same day.</p>
         <div class="price-row"><div class="price"><span>Diagnostic Charge</span>₹599</div><div class="book-link">Book →</div></div>
       </a>
-      <a href="booking.html?service=CCTV" class="service-tile">
+      <a href="booking.html?service=CCTV" class="service-tile" style="--accent:#B45309; --accent-soft:#FEF3C7;">
         <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="13" height="9" rx="1.5"/><path d="M16 10 L21 7 V16 L16 13"/></svg></div>
         <h3>CCTV Installation</h3>
-        <p>Camera setup, DVR configuration, remote viewing.</p>
+        <p>Camera placement, DVR/NVR setup, remote viewing on your phone — full coverage, zero blind spots.</p>
         <div class="price-row"><div class="price"><span>Per camera</span>₹499</div><div class="book-link">Book →</div></div>
       </a>
-      <a href="booking.html?service=Networking" class="service-tile">
+      <a href="booking.html?service=Networking" class="service-tile" style="--accent:#0D9488; --accent-soft:#E6FBF7;">
         <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.2"/><circle cx="18" cy="6" r="2.2"/><circle cx="12" cy="18" r="2.2"/><path d="M7.5 7.5 L11 16.5 M16.5 7.5 L13 16.5 M8 6 H16"/></svg></div>
         <h3>Networking &amp; WiFi</h3>
-        <p>Router setup, WiFi dead zones, cabling.</p>
+        <p>Router setup, dead-zone fixes, structured cabling — reliable WiFi in every corner.</p>
         <div class="price-row"><div class="price"><span>Diagnostic Charge</span>₹799</div><div class="book-link">Book →</div></div>
       </a>
-      <a href="booking.html?service=Server" class="service-tile">
+      <a href="booking.html?service=Server" class="service-tile" style="--accent:#7C3AED; --accent-soft:#F1EBFD;">
         <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="6" rx="1"/><rect x="4" y="14" width="16" height="6" rx="1"/><circle cx="8" cy="7" r="0.8" fill="currentColor" stroke="none"/><circle cx="8" cy="17" r="0.8" fill="currentColor" stroke="none"/></svg></div>
         <h3>Server Support</h3>
-        <p>Setup, maintenance, troubleshooting.</p>
+        <p>Installation, patching, backups, and troubleshooting for Windows and Linux servers.</p>
         <div class="price-row"><div class="price"><span>Diagnostic Charge</span>₹1,499</div><div class="book-link">Book →</div></div>
       </a>
-      <a href="booking.html?service=NAS" class="service-tile">
+      <a href="booking.html?service=NAS" class="service-tile" style="--accent:#0891B2; --accent-soft:#E0F7FA;">
         <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="7.5" ry="2.4"/><path d="M4.5 6 V18 C4.5 19.3 7.9 20.4 12 20.4 C16.1 20.4 19.5 19.3 19.5 18 V6"/><path d="M4.5 12 C4.5 13.3 7.9 14.4 12 14.4 C16.1 14.4 19.5 13.3 19.5 12"/></svg></div>
         <h3>NAS Installation</h3>
-        <p>Storage setup, backup configuration.</p>
+        <p>Centralized storage setup with automated backups and secure remote access.</p>
         <div class="price-row"><div class="price"><span>Diagnostic Charge</span>₹1,499</div><div class="book-link">Book →</div></div>
       </a>
-      <a href="booking.html?service=Firewall" class="service-tile">
+      <a href="booking.html?service=Firewall" class="service-tile" style="--accent:#DC2626; --accent-soft:#FBE9E7;">
         <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L20 5.5 V11 C20 16 16.5 19.5 12 21 C7.5 19.5 4 16 4 11 V5.5 Z"/><path d="M8.5 12 L11 14.5 L15.5 9"/></svg></div>
         <h3>Firewall Setup</h3>
-        <p>FortiGate, Sophos, SonicWall configuration.</p>
+        <p>FortiGate, Sophos, and SonicWall configuration to keep your network locked down.</p>
         <div class="price-row"><div class="price"><span>Diagnostic Charge</span>₹1,999</div><div class="book-link">Book →</div></div>
       </a>
-      <a href="booking.html?service=AMC" class="service-tile">
+      <a href="booking.html?service=AMC" class="service-tile" style="--accent:#059669; --accent-soft:#D1FAE5;">
         <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11 L12 14 L20 6"/><path d="M20 12 V17 A2 2 0 0 1 18 19 H6 A2 2 0 0 1 4 17 V7 A2 2 0 0 1 6 5 H15"/></svg></div>
         <h3>Office IT AMC</h3>
-        <p>Ongoing maintenance contracts for offices.</p>
+        <p>Monthly maintenance contracts — proactive monitoring so problems get fixed before they slow you down.</p>
         <div class="price-row"><div class="price"><span>Diagnostic Charge</span>₹2,999/mo</div><div class="book-link">Book →</div></div>
       </a>
-      <a href="booking.html?service=Home" class="service-tile">
+      <a href="booking.html?service=Home" class="service-tile" style="--accent:#DB2777; --accent-soft:#FCE7F3;">
         <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12 L5 12 L7 6 L11 18 L14 9 L16 12 L21 12"/></svg></div>
         <h3>Home IT Support</h3>
-        <p>Smart home, personal devices, general help.</p>
+        <p>Smart home devices, personal laptops, printers — one visit sorts everything at home.</p>
         <div class="price-row"><div class="price"><span>Diagnostic Charge</span>₹599</div><div class="book-link">Book →</div></div>
       </a>
-      <a href="booking.html?service=DataRecovery" class="service-tile">
+      <a href="booking.html?service=DataRecovery" class="service-tile" style="--accent:#2563EB; --accent-soft:#DBEAFE;">
         <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12 C4 7.5 7.5 4 12 4 C16.5 4 20 7.5 20 12"/><path d="M4 12 L4 16 M20 12 L20 16"/><path d="M4 16 C4 18 6 19 8 18 M20 16 C20 18 18 19 16 18"/></svg></div>
         <h3>Data Recovery</h3>
-        <p>Recover files from failed drives.</p>
+        <p>Recover photos, documents, and files from failed, corrupted, or accidentally formatted drives.</p>
         <div class="price-row"><div class="price"><span>Diagnostic Charge</span>₹999</div><div class="book-link">Book →</div></div>
       </a>
     </div>
