@@ -19,7 +19,11 @@
     --display:'Space Grotesk', sans-serif; --body:'Inter', sans-serif; --mono:'IBM Plex Mono', monospace;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
-  body{background:var(--paper); color:var(--ink); font-family:var(--body); line-height:1.6;}
+  body{
+    background: radial-gradient(1100px 520px at 50% -12%, #E4E2FA 0%, rgba(228,226,250,0) 60%), var(--paper);
+    background-attachment: fixed;
+    color:var(--ink); font-family:var(--body); line-height:1.6;
+  }
   a{color:inherit; text-decoration:none;}
   .wrap{max-width:680px; margin:0 auto; padding:0 24px;}
   h1,h2{font-family:var(--display); font-weight:700; color:var(--ink);}
