@@ -327,12 +327,33 @@
     return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
+  function formatWaNumber(phone){
+    const digits = String(phone || '').replace(/\D/g, '');
+    return digits.length === 10 ? '91' + digits : digits;
+  }
+
+  // Uses the engineer's on-site final bill if any items were added; otherwise
+  // falls back to the original booking-time estimate (visiting/labour charge
+  // + any selected add-ons) so there's always a total to invoice.
+  function buildInvoiceMessage(b){
+    const items = (b.finalBillItems && b.finalBillItems.length) ? b.finalBillItems : (b.addOns || []);
+    const total = (b.finalBillItems && b.finalBillItems.length) ? (b.finalBillTotal || 0) : (b.totalEstimate || b.labourCharge || 0);
+    const itemLines = items.length
+      ? items.map(i => `- ${i.name}${i.qty ? ' x' + i.qty : ''}: ₹${(i.price * (i.qty || 1)).toLocaleString('en-IN')}`).join('\n')
+      : '';
+    return `Compoter — Invoice\n\nBooking: ${b.bookingNumber}\nService: ${b.service}\n`
+      + (itemLines ? `\nItems:\n${itemLines}\n` : '')
+      + (b.labourCharge ? `\nVisiting & Labour Charge: ₹${Number(b.labourCharge).toLocaleString('en-IN')}` : '')
+      + `\nTotal: ₹${Number(total).toLocaleString('en-IN')}\n\nDhanyawad, Compoter choose karne ke liye!`;
+  }
+
   function notifyClientEmail(booking, statusKey){
     if (!booking.email) return;
     const message = `Aapki booking ka status update hua hai:\n\n`
       + `Booking: ${booking.bookingNumber}\nService: ${booking.service}\n`
       + `Naya Status: ${STATUS_LABELS[statusKey] || statusKey}\n`
       + (booking.assignedEngineer ? `Engineer: ${booking.assignedEngineer}${booking.assignedEngineerPhone ? ' (' + booking.assignedEngineerPhone + ')' : ''}\n` : '')
+      + (statusKey === 'completed' ? `\n${buildInvoiceMessage(booking)}\n` : '')
       + `\n- Compoter Team`;
     emailjs.send("service_p4lpxi5", "template_6k9mcnh", {
       to_name: booking.name,

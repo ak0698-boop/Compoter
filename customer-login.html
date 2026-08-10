@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root{
     --paper:#F8F9FC; --paper-raised:#FFFFFF; --ink:#101820;
@@ -94,6 +95,10 @@
   .final-bill-view .fb-title{font-size:12.5px; font-weight:700; margin-bottom:6px;}
   .final-bill-view .fb-row{display:flex; justify-content:space-between; font-size:12.5px; color:var(--steel); padding:3px 0;}
   .final-bill-view .fb-row-total{display:flex; justify-content:space-between; font-size:13px; font-weight:700; color:var(--ink); border-top:1px solid var(--line); margin-top:6px; padding-top:8px;}
+  .download-invoice-btn{
+    width:100%; margin-top:12px; padding:10px; border-radius:8px; border:1.5px solid var(--indigo);
+    background:#fff; color:var(--indigo); font-weight:600; font-size:13px; cursor:pointer; font-family:var(--body);
+  }
   .map-pin{
     background:#fff; border:2px solid var(--indigo); border-radius:50%;
     display:flex; align-items:center; justify-content:center; font-size:13px;
@@ -350,6 +355,57 @@
 
   document.getElementById('signout-btn').addEventListener('click', () => signOut(auth));
 
+  function downloadInvoicePdf(b){
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const hasFinalBill = b.finalBillItems && b.finalBillItems.length;
+    const items = hasFinalBill ? b.finalBillItems : (b.addOns || []);
+    const total = hasFinalBill ? (b.finalBillTotal || 0) : (b.totalEstimate || b.labourCharge || 0);
+
+    let y = 20;
+    doc.setFontSize(18);
+    doc.text('Compoter — Invoice', 14, y);
+    y += 12;
+    doc.setFontSize(11);
+    doc.text(`Booking: ${b.bookingNumber}`, 14, y); y += 7;
+    doc.text(`Service: ${b.service}`, 14, y); y += 7;
+    doc.text(`Customer: ${b.name || ''}`, 14, y); y += 7;
+    doc.text(`Date: ${new Date().toLocaleDateString('en-IN')}`, 14, y); y += 12;
+
+    doc.setFontSize(12);
+    doc.text('Items', 14, y); y += 8;
+    doc.setFontSize(11);
+    items.forEach(i => {
+      doc.text(`${i.name}${i.qty ? ' x' + i.qty : ''}`, 14, y);
+      doc.text(`₹${(i.price * (i.qty || 1)).toLocaleString('en-IN')}`, 180, y, { align: 'right' });
+      y += 7;
+    });
+    if (!hasFinalBill && b.labourCharge) {
+      doc.text('Visiting & Labour Charge', 14, y);
+      doc.text(`₹${Number(b.labourCharge).toLocaleString('en-IN')}`, 180, y, { align: 'right' });
+      y += 7;
+    }
+    y += 5;
+    doc.setLineWidth(0.3);
+    doc.line(14, y, 196, y);
+    y += 8;
+    doc.setFontSize(13);
+    doc.text('Total', 14, y);
+    doc.text(`₹${Number(total).toLocaleString('en-IN')}`, 180, y, { align: 'right' });
+    y += 14;
+    doc.setFontSize(10);
+    doc.text('Dhanyawad, Compoter choose karne ke liye!', 14, y);
+
+    doc.save(`Invoice-${b.bookingNumber}.pdf`);
+  }
+
+  jobsList.addEventListener('click', (e) => {
+    const btn = e.target.closest('.download-invoice-btn');
+    if (!btn) return;
+    const booking = bookingsMap[btn.dataset.booking];
+    if (booking) downloadInvoicePdf(booking);
+  });
+
   const bookingUnsubs = {}; // bookingNumber -> unsub
   let bookingsMap = {};     // bookingId -> data
   const liveMaps = {};      // bookingId -> { map, marker }
@@ -525,11 +581,17 @@
     const showMap = (b.status === 'on_the_way' || b.status === 'in_progress');
     const mapHTML = showMap ? `<div class="live-map" id="cust-map-${esc(b.id)}"></div>` : '';
 
-    const finalBillHTML = (b.finalBillItems && b.finalBillItems.length)
+    const hasFinalBill = b.finalBillItems && b.finalBillItems.length;
+    const showInvoice = hasFinalBill || b.status === 'completed';
+    const invoiceItems = hasFinalBill ? b.finalBillItems : (b.addOns || []);
+    const invoiceTotal = hasFinalBill ? (b.finalBillTotal || 0) : (b.totalEstimate || b.labourCharge || 0);
+    const finalBillHTML = showInvoice
       ? `<div class="final-bill-view">
-           <div class="fb-title">💰 Final Bill</div>
-           ${b.finalBillItems.map(i => `<div class="fb-row"><span>${esc(i.name)}</span><span>₹${Number(i.price).toLocaleString('en-IN')}</span></div>`).join('')}
-           <div class="fb-row-total"><span>Total</span><span>₹${Number(b.finalBillTotal || 0).toLocaleString('en-IN')}</span></div>
+           <div class="fb-title">💰 ${b.status === 'completed' ? 'Invoice' : 'Final Bill'}</div>
+           ${invoiceItems.map(i => `<div class="fb-row"><span>${esc(i.name)}${i.qty ? ' x' + i.qty : ''}</span><span>₹${(i.price * (i.qty || 1)).toLocaleString('en-IN')}</span></div>`).join('')}
+           ${(!hasFinalBill && b.labourCharge) ? `<div class="fb-row"><span>Visiting &amp; Labour Charge</span><span>₹${Number(b.labourCharge).toLocaleString('en-IN')}</span></div>` : ''}
+           <div class="fb-row-total"><span>Total</span><span>₹${Number(invoiceTotal).toLocaleString('en-IN')}</span></div>
+           ${b.status === 'completed' ? `<button type="button" class="download-invoice-btn" data-booking="${esc(b.id)}">⬇ Download Invoice (PDF)</button>` : ''}
          </div>`
       : '';
 
