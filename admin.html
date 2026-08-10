@@ -149,6 +149,7 @@
       <div class="panel-head">
         <h2>Bookings</h2>
         <span class="count-pill" id="bookings-count">0</span>
+        <span class="count-pill" id="commission-total" style="background:var(--indigo-soft); color:var(--indigo);">Total Commission: ₹0</span>
       </div>
       <div style="overflow-x:auto;">
         <table>
@@ -467,6 +468,9 @@
     const empty = document.getElementById('bookings-empty');
     document.getElementById('bookings-count').textContent = allBookings.length;
 
+    const totalCommission = allBookings.reduce((sum, b) => sum + Number(b.commissionAmount || 0), 0);
+    document.getElementById('commission-total').textContent = 'Total Commission: ₹' + totalCommission.toLocaleString('en-IN');
+
     if (!allBookings.length) {
       tbody.innerHTML = '';
       empty.style.display = 'block';
@@ -496,7 +500,7 @@
       return `<tr>
         <td data-label="Booking"><span class="mono">${esc(b.bookingNumber)}</span><div class="cell-sub">${fmtDate(b.createdAt)}</div></td>
         <td data-label="Customer"><div class="cell-name">${esc(b.name)}</div><div class="cell-sub">${esc(b.phone)}</div>${clientWaButton}</td>
-        <td data-label="Service">${esc(b.service)}${(b.addOns && b.addOns.length) ? `<div class="cell-sub">${b.addOns.map(i => esc(i.name) + ' x' + i.qty).join(', ')} (₹${(b.addOnsTotal || 0).toLocaleString('en-IN')})</div>` : ''}${b.couponCode ? `<div class="cell-sub">Coupon: ${esc(b.couponCode)} (-₹${Number(b.discountAmount || 0).toLocaleString('en-IN')})</div>` : ''}${b.totalEstimate ? `<div class="cell-sub">Est. total: ₹${Number(b.totalEstimate).toLocaleString('en-IN')}</div>` : ''}${(b.finalBillItems && b.finalBillItems.length) ? `<div class="cell-sub">Final bill: ${b.finalBillItems.map(i => esc(i.name) + ' ₹' + i.price).join(', ')} — ₹${(b.finalBillTotal || 0).toLocaleString('en-IN')}</div>` : ''}</td>
+        <td data-label="Service">${esc(b.service)}${(b.addOns && b.addOns.length) ? `<div class="cell-sub">${b.addOns.map(i => esc(i.name) + ' x' + i.qty).join(', ')} (₹${(b.addOnsTotal || 0).toLocaleString('en-IN')})</div>` : ''}${b.couponCode ? `<div class="cell-sub">Coupon: ${esc(b.couponCode)} (-₹${Number(b.discountAmount || 0).toLocaleString('en-IN')})</div>` : ''}${b.totalEstimate ? `<div class="cell-sub">Est. total: ₹${Number(b.totalEstimate).toLocaleString('en-IN')}</div>` : ''}${(b.finalBillItems && b.finalBillItems.length) ? `<div class="cell-sub">Final bill: ${b.finalBillItems.map(i => esc(i.name) + ' ₹' + i.price).join(', ')} — ₹${(b.finalBillTotal || 0).toLocaleString('en-IN')}</div>` : ''}${b.commissionAmount != null ? `<div class="cell-sub" style="color:var(--mint,#1F8A70); font-weight:600;">Commission: ₹${Number(b.commissionAmount).toLocaleString('en-IN')} • Engineer payout: ₹${Number(b.engineerPayout || 0).toLocaleString('en-IN')}</div>` : ''}</td>
         <td data-label="Location">${esc(b.city)}</td>
         <td data-label="Preferred">${esc(b.date || 'Any date')}<div class="cell-sub">${esc(b.time || '')}</div></td>
         <td data-label="Status"><select class="status-select" data-booking="${esc(b.id)}">${statusOptions}</select></td>

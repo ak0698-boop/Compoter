@@ -219,6 +219,14 @@
       </div>
       <div class="field"><label for="s-id-number">ID Proof Number</label><input type="text" id="s-id-number" placeholder="ID number"></div>
       <div class="field"><label for="s-notes">Anything else? (optional)</label><textarea id="s-notes" placeholder="Certifications, availability, etc."></textarea></div>
+
+      <div class="field" style="background:#FEF3C7; border:1px solid #F5C067; border-radius:8px; padding:14px;">
+        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; font-weight:500; font-size:13.5px;">
+          <input type="checkbox" id="s-commission-ack" style="margin-top:3px; width:auto;">
+          <span>Main samajhta/samajhti hoon ki <b>Compoter har completed job ke total amount ka 20% commission</b> leta hai — baaki 80% mera payout hoga.</span>
+        </label>
+      </div>
+
       <button class="btn" id="save-signup-btn">Submit for Verification</button>
       <p class="msg err" id="signup-error"></p>
     </div>
@@ -487,6 +495,12 @@
       return;
     }
 
+    if (!document.getElementById('s-commission-ack').checked) {
+      signupError.textContent = '20% commission wale checkbox ko confirm karein.';
+      signupError.classList.add('show');
+      return;
+    }
+
     const skills = [];
     ['skill-Computer', 'skill-Printer', 'skill-CCTV', 'skill-Networking', 'skill-Server', 'skill-NAS', 'skill-Firewall', 'skill-AMC', 'skill-Home', 'skill-DataRecovery'].forEach(id => {
       const el = document.getElementById(id);
@@ -723,6 +737,10 @@
         ? `<div class="job-row"><b>Estimated Total:</b> ₹${Number(b.totalEstimate).toLocaleString('en-IN')} (incl. visiting/labour ₹${(b.labourCharge || 0).toLocaleString('en-IN')})</div>`
         : '';
 
+      const payoutHTML = (b.status === 'completed' && b.commissionAmount != null)
+        ? `<div class="job-row"><b>Aapka Payout:</b> ₹${Number(b.engineerPayout || 0).toLocaleString('en-IN')} <span style="color:var(--steel-light);">(Compoter commission 20%: ₹${Number(b.commissionAmount).toLocaleString('en-IN')})</span></div>`
+        : '';
+
       const finalBillItems = b.finalBillItems || [];
       const finalBillTotal = finalBillItems.reduce((s, i) => s + Number(i.price || 0), 0);
       const finalBillHTML = (b.status === 'on_the_way' || b.status === 'in_progress') ? `
@@ -757,6 +775,7 @@
         <div class="job-row"><b>Preferred:</b> ${esc(b.date || 'Any date')} — ${esc(b.time || '')}</div>
         ${addOnsHTML}
         ${totalHTML}
+        ${payoutHTML}
         <div class="job-desc">${esc(b.description)}</div>
         ${finalBillHTML}
         <div class="job-actions">${actionBtn}${declineBtn}${callLink}${directionsLink}</div>
@@ -841,8 +860,18 @@
     const bookingId = btn.dataset.booking;
     const nextStatus = btn.dataset.next;
     const booking = currentJobs.find(j => j.id === bookingId);
+
+    const updateData = { status: nextStatus, updatedAt: serverTimestamp() };
+    if (nextStatus === 'completed' && booking) {
+      const hasFinalBill = booking.finalBillItems && booking.finalBillItems.length;
+      const finalAmount = hasFinalBill ? (booking.finalBillTotal || 0) : (booking.totalEstimate || booking.labourCharge || 0);
+      const commissionAmount = Math.round(finalAmount * 0.20);
+      updateData.commissionAmount = commissionAmount;
+      updateData.engineerPayout = finalAmount - commissionAmount;
+    }
+
     try {
-      await updateDoc(doc(db, 'bookings', bookingId), { status: nextStatus, updatedAt: serverTimestamp() });
+      await updateDoc(doc(db, 'bookings', bookingId), updateData);
       if (booking) notifyClientEmail(booking, nextStatus);
     } catch (err) {
       console.error('Status update failed:', err);
