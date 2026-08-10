@@ -205,6 +205,40 @@
     return String(phone || '').replace(/\D/g, '').slice(-10);
   }
 
+  // Deterministic, unique per phone number — doubles as the referral coupon's
+  // Firestore doc ID, so no random-generation/collision-check needed.
+  function referralCodeForPhone(phone){
+    return 'REF' + normalizePhone(phone).slice(-6);
+  }
+
+  // Creates this customer's referral coupon if it doesn't already exist —
+  // called both right after signup and as a backfill for accounts created
+  // before this feature existed. New customers who book with this code get
+  // 10% off; the referrer earns a ₹100 wallet credit (functions/applyCouponUsage
+  // credits it server-side once the referred booking is created).
+  async function ensureReferralCode(uid, phone){
+    const code = referralCodeForPhone(phone);
+    try {
+      const couponRef = doc(db, 'coupons', code);
+      const snap = await getDoc(couponRef);
+      if (!snap.exists()) {
+        await setDoc(couponRef, {
+          code,
+          type: 'percent',
+          value: 10,
+          isReferral: true,
+          referrerUid: uid,
+          referrerReward: 100,
+          active: true,
+          usageCount: 0
+        });
+      }
+    } catch (err) {
+      console.error('referral code setup failed', err);
+    }
+    return code;
+  }
+
   function esc(str){
     return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
@@ -327,12 +361,15 @@
     saveNameBtn.disabled = true;
     saveNameBtn.textContent = 'Saving...';
     try {
+      const referralCode = await ensureReferralCode(pendingUser.uid, pendingUser.phoneNumber);
       await setDoc(doc(db, 'customers', pendingUser.uid), {
         uid: pendingUser.uid,
         name,
         email,
         phone: pendingUser.phoneNumber,
         phoneKey: normalizePhone(pendingUser.phoneNumber),
+        referralCode,
+        walletCredit: 0,
         createdAt: new Date().toISOString()
       });
       window.location.replace('index.html');
@@ -465,6 +502,18 @@
       window.location.replace('index.html');
       return;
     }
+
+    // Backfill: accounts created before the referral feature existed won't
+    // have a code yet — generate one silently on their next login.
+    if (!custSnap.data().referralCode) {
+      const referralCode = await ensureReferralCode(user.uid, user.phoneNumber);
+      try {
+        await setDoc(doc(db, 'customers', user.uid), { referralCode, walletCredit: 0 }, { merge: true });
+      } catch (err) {
+        console.error('referral backfill failed', err);
+      }
+    }
+
     await loadDashboard(user, custSnap.data().name);
   });
 

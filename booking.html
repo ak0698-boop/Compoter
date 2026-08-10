@@ -150,9 +150,19 @@
       <p style="font-size:12px; color:var(--steel-light); margin-top:6px;">Prices shown are starting estimates — the exact price depends on your device's brand/model and is confirmed by the engineer after inspection.</p>
     </div>
 
+    <div class="field">
+      <label for="b-coupon">Coupon / Referral Code (optional)</label>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="b-coupon" placeholder="e.g. WELCOME20" style="flex:1; text-transform:uppercase;">
+        <button type="button" id="apply-coupon-btn" style="width:auto; padding:12px 18px; background:var(--indigo-soft); color:var(--indigo); border-radius:8px; border:none; font-weight:600; cursor:pointer;">Apply</button>
+      </div>
+      <p class="error-msg" id="coupon-msg" style="color:var(--steel);"></p>
+    </div>
+
     <div class="price-breakdown">
       <div class="pb-row"><span>Visiting &amp; Labour Charge</span><span id="pb-labour">—</span></div>
       <div id="pb-items"></div>
+      <div class="pb-row" id="pb-discount-row" style="display:none; color:var(--mint,#1F8A70);"><span id="pb-discount-label">Discount</span><span id="pb-discount">—</span></div>
       <div class="pb-row pb-total"><span>Total (estimated)</span><span id="pb-total">—</span></div>
     </div>
 
@@ -185,7 +195,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { initializeFirestore, doc, setDoc, runTransaction, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { initializeFirestore, doc, getDoc, setDoc, runTransaction, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyA80s9jtewt93rsveqQyXD2xslm1chJuME",
@@ -303,6 +313,7 @@
     ]
   };
   let addonQty = {};
+  let appliedCoupon = null; // { code, type, value } once successfully applied
 
   function esc(str){
     return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -321,6 +332,10 @@
 
     const labourEl = document.getElementById('pb-labour');
     const totalEl = document.getElementById('pb-total');
+    const discountRow = document.getElementById('pb-discount-row');
+    const discountLabel = document.getElementById('pb-discount-label');
+    const discountEl = document.getElementById('pb-discount');
+
     if (priceAttr) {
       const labour = Number(priceAttr);
       let suffix = '';
@@ -328,12 +343,60 @@
       if (opt.value === 'CCTV') suffix = '/camera';
       labourEl.textContent = '₹' + labour.toLocaleString('en-IN') + suffix;
       const itemsTotal = selected.reduce((sum, i) => sum + i.price * addonQty[i.id], 0);
-      totalEl.textContent = '₹' + (labour + itemsTotal).toLocaleString('en-IN') + suffix;
+      const subtotal = labour + itemsTotal;
+
+      let discount = 0;
+      if (appliedCoupon) {
+        discount = appliedCoupon.type === 'percent'
+          ? Math.round(subtotal * appliedCoupon.value / 100)
+          : appliedCoupon.value;
+        discount = Math.min(discount, subtotal);
+      }
+
+      if (discount > 0) {
+        discountRow.style.display = 'flex';
+        discountLabel.textContent = 'Discount (' + appliedCoupon.code + ')';
+        discountEl.textContent = '−₹' + discount.toLocaleString('en-IN');
+      } else {
+        discountRow.style.display = 'none';
+      }
+
+      totalEl.textContent = '₹' + (subtotal - discount).toLocaleString('en-IN') + suffix;
     } else {
       labourEl.textContent = 'To be quoted';
       totalEl.textContent = 'To be quoted';
+      discountRow.style.display = 'none';
     }
   }
+
+  document.getElementById('apply-coupon-btn').addEventListener('click', async () => {
+    const input = document.getElementById('b-coupon');
+    const msg = document.getElementById('coupon-msg');
+    const code = input.value.trim().toUpperCase();
+    msg.style.display = 'none';
+    if (!code) return;
+    try {
+      const snap = await getDoc(doc(db, 'coupons', code));
+      if (!snap.exists() || snap.data().active === false) {
+        appliedCoupon = null;
+        msg.textContent = 'Ye coupon code valid nahi hai.';
+        msg.style.display = 'block';
+        updateBreakdown();
+        return;
+      }
+      const c = snap.data();
+      appliedCoupon = { code, type: c.type, value: c.value };
+      msg.style.color = 'var(--mint)';
+      msg.textContent = 'Coupon applied! ' + (c.type === 'percent' ? c.value + '% off' : '₹' + c.value + ' off') + '.';
+      msg.style.display = 'block';
+      updateBreakdown();
+    } catch (err) {
+      console.error('coupon lookup failed', err);
+      msg.textContent = 'Coupon check karne me dikkat hui, dobara try karo.';
+      msg.style.display = 'block';
+      updateBreakdown();
+    }
+  });
 
   function renderAddons(serviceValue){
     const field = document.getElementById('addons-field');
@@ -434,13 +497,24 @@
         .map(i => ({ name: i.name, price: i.price, qty: addonQty[i.id] }));
       const addOnsTotal = addOns.reduce((sum, i) => sum + i.price * i.qty, 0);
       const labourCharge = estimatedPrice ? Number(estimatedPrice) : 0;
-      const totalEstimate = estimatedPrice ? (labourCharge + addOnsTotal) : '';
+      const subtotal = labourCharge + addOnsTotal;
+
+      let discountAmount = 0;
+      let couponCode = '';
+      if (estimatedPrice && appliedCoupon) {
+        discountAmount = appliedCoupon.type === 'percent'
+          ? Math.round(subtotal * appliedCoupon.value / 100)
+          : appliedCoupon.value;
+        discountAmount = Math.min(discountAmount, subtotal);
+        couponCode = appliedCoupon.code;
+      }
+      const totalEstimate = estimatedPrice ? (subtotal - discountAmount) : '';
 
       const phoneKey = normalizePhone(phone);
       const location = savedLocation;
 
       await setDoc(doc(db, "bookings", bookingNumber), {
-        bookingNumber, name, phone, phoneKey, email, city, address, service, estimatedPrice, labourCharge, addOns, addOnsTotal, totalEstimate, date, time, description,
+        bookingNumber, name, phone, phoneKey, email, city, address, service, estimatedPrice, labourCharge, addOns, addOnsTotal, couponCode, discountAmount, totalEstimate, date, time, description,
         status: 'pending',
         assignedEngineer: '',
         assignedEngineerPhone: '',
@@ -460,7 +534,9 @@
         ? `\n\nItems selected:\n` + addOns.map(i => `- ${i.name} x${i.qty} (₹${i.price * i.qty})`).join('\n')
         : '';
       const totalText = estimatedPrice
-        ? `\n\nVisiting & Labour Charge: ₹${labourCharge.toLocaleString('en-IN')}\nEstimated Total: ₹${Number(totalEstimate).toLocaleString('en-IN')}`
+        ? `\n\nVisiting & Labour Charge: ₹${labourCharge.toLocaleString('en-IN')}`
+          + (discountAmount ? `\nCoupon (${couponCode}): -₹${discountAmount.toLocaleString('en-IN')}` : '')
+          + `\nEstimated Total: ₹${Number(totalEstimate).toLocaleString('en-IN')}`
         : '';
 
       emailjs.send("service_p4lpxi5", "template_7lziz6o", {

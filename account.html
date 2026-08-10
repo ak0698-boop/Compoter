@@ -104,6 +104,16 @@
     </div>
   </div>
 
+  <div class="card" id="referral-card">
+    <div class="row">
+      <span class="label-col">🎁 Refer &amp; Earn<span class="val" id="f-referral-code">—</span></span>
+      <button type="button" id="share-referral-btn" style="background:var(--indigo-soft); color:var(--indigo); border:none; border-radius:7px; padding:8px 14px; font-weight:600; font-size:13px; cursor:pointer;">Share</button>
+    </div>
+    <div class="row">
+      <span class="label-col">💰 Wallet Credit<span class="val" id="f-wallet">₹0</span></span>
+    </div>
+  </div>
+
   <div class="card">
     <a class="row" href="customer-login.html"><span>📋 My Bookings</span><span class="chev">›</span></a>
     <a class="row" href="booking.html"><span>➕ Book a New Service</span><span class="chev">›</span></a>
@@ -170,6 +180,8 @@
     setRow('f-emergency', profile.emergencyContact);
     document.getElementById('f-phone').textContent = currentUser.phoneNumber || '—';
     document.getElementById('f-member-since').textContent = fmtMemberSince(profile.createdAt);
+    document.getElementById('f-referral-code').textContent = profile.referralCode || '—';
+    document.getElementById('f-wallet').textContent = '₹' + Number(profile.walletCredit || 0).toLocaleString('en-IN');
 
     const initialEl = document.getElementById('avatar-initial');
     const photoEl = document.getElementById('avatar-photo');
@@ -212,6 +224,17 @@
 
   document.getElementById('dob-input').addEventListener('change', (e) => {
     if (e.target.value) saveField('dob', e.target.value);
+  });
+
+  document.getElementById('share-referral-btn').addEventListener('click', () => {
+    const code = profile.referralCode;
+    if (!code) return;
+    const text = `Compoter par IT support book karo — mera referral code use karo "${code}" aur pehli booking par 10% off pao!\n\nhttps://compoter.in`;
+    if (navigator.share) {
+      navigator.share({ text }).catch(() => {});
+    } else {
+      window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+    }
   });
 
   document.getElementById('avatar-edit-btn').addEventListener('click', () => {
