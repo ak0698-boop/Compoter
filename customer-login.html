@@ -273,6 +273,8 @@
     showStep(phoneStep);
   });
 
+  let justAuthenticated = false;
+
   verifyOtpBtn.addEventListener('click', async () => {
     const code = otpInput.value.trim();
     otpError.classList.remove('show');
@@ -284,10 +286,12 @@
     verifyOtpBtn.disabled = true;
     verifyOtpBtn.textContent = 'Verifying...';
     try {
+      justAuthenticated = true;
       await withTimeout(confirmationResult.confirm(code), 20000, 'Verify timed out — try again.');
       // onAuthStateChanged takes over from here.
     } catch (err) {
       console.error(err);
+      justAuthenticated = false;
       otpError.textContent = 'Galat OTP ya network dikkat (' + (err.code || err.message) + '). Dobara try karo.';
       otpError.classList.add('show');
       verifyOtpBtn.disabled = false;
@@ -322,7 +326,8 @@
         phoneKey: normalizePhone(pendingUser.phoneNumber),
         createdAt: new Date().toISOString()
       });
-      await loadDashboard(pendingUser, name);
+      window.location.replace('index.html');
+      return;
     } catch (err) {
       console.error(err);
       nameError.textContent = 'Kuch gadbad ho gayi (' + (err.code || err.message) + ').';
@@ -395,6 +400,11 @@
       return;
     }
 
+    if (justAuthenticated) {
+      justAuthenticated = false;
+      window.location.replace('index.html');
+      return;
+    }
     await loadDashboard(user, custSnap.data().name);
   });
 
