@@ -95,6 +95,14 @@
   .final-bill-view .fb-title{font-size:12.5px; font-weight:700; margin-bottom:6px;}
   .final-bill-view .fb-row{display:flex; justify-content:space-between; font-size:12.5px; color:var(--steel); padding:3px 0;}
   .final-bill-view .fb-row-total{display:flex; justify-content:space-between; font-size:13px; font-weight:700; color:var(--ink); border-top:1px solid var(--line); margin-top:6px; padding-top:8px;}
+  .rate-box{margin-top:10px; padding:12px; background:var(--paper); border:1px solid var(--line); border-radius:8px;}
+  .rate-box .rate-title{font-size:12.5px; font-weight:700; margin-bottom:8px;}
+  .star-row{display:flex; gap:4px; margin-bottom:8px;}
+  .star-row .star{font-size:24px; cursor:pointer; color:var(--line); user-select:none;}
+  .star-row .star.filled{color:#F5A623;}
+  .star-row.readonly .star{cursor:default;}
+  .rate-box textarea{width:100%; border:1px solid var(--line); border-radius:6px; padding:8px; font-size:13px; font-family:var(--body); resize:vertical; min-height:50px; margin-bottom:8px;}
+  .rate-submit-btn{background:var(--indigo); color:#fff; border:none; border-radius:7px; padding:8px 16px; font-weight:600; font-size:12.5px; cursor:pointer;}
   .download-invoice-btn{
     width:100%; margin-top:12px; padding:10px; border-radius:8px; border:1.5px solid var(--indigo);
     background:#fff; color:var(--indigo); font-weight:600; font-size:13px; cursor:pointer; font-family:var(--body);
@@ -177,7 +185,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { initializeFirestore, doc, getDoc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { initializeFirestore, doc, getDoc, setDoc, updateDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyA80s9jtewt93rsveqQyXD2xslm1chJuME",
@@ -436,11 +444,46 @@
     doc.save(`Invoice-${b.bookingNumber}.pdf`);
   }
 
-  jobsList.addEventListener('click', (e) => {
-    const btn = e.target.closest('.download-invoice-btn');
-    if (!btn) return;
-    const booking = bookingsMap[btn.dataset.booking];
-    if (booking) downloadInvoicePdf(booking);
+  jobsList.addEventListener('click', async (e) => {
+    const downloadBtn = e.target.closest('.download-invoice-btn');
+    if (downloadBtn) {
+      const booking = bookingsMap[downloadBtn.dataset.booking];
+      if (booking) downloadInvoicePdf(booking);
+      return;
+    }
+
+    const star = e.target.closest('.star-row:not(.readonly) .star');
+    if (star) {
+      const row = star.closest('.star-row');
+      const value = Number(star.dataset.value);
+      row.dataset.rating = value;
+      row.querySelectorAll('.star').forEach(s => {
+        s.classList.toggle('filled', Number(s.dataset.value) <= value);
+      });
+      return;
+    }
+
+    const submitBtn = e.target.closest('.rate-submit-btn');
+    if (submitBtn) {
+      const box = submitBtn.closest('.rate-box');
+      const bookingId = box.dataset.booking;
+      const rating = Number(box.querySelector('.star-row').dataset.rating);
+      const review = box.querySelector('.review-input').value.trim();
+      if (!rating) { alert('Pehle stars par tap karke rating do.'); return; }
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+      try {
+        await updateDoc(doc(db, 'bookings', bookingId), {
+          rating, review, ratedAt: new Date().toISOString()
+        });
+      } catch (err) {
+        console.error('rating submit failed', err);
+        alert('Rating submit nahi ho payi (' + (err.code || err.message) + ').');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Rating';
+      }
+      return;
+    }
   });
 
   const bookingUnsubs = {}; // bookingNumber -> unsub
@@ -644,6 +687,27 @@
          </div>`
       : '';
 
+    let ratingHTML = '';
+    if (b.status === 'completed' && b.assignedEngineer) {
+      if (b.rating) {
+        const stars = [1,2,3,4,5].map(n => `<span class="star${n <= b.rating ? ' filled' : ''}">★</span>`).join('');
+        ratingHTML = `<div class="rate-box">
+          <div class="rate-title">Aapki rating</div>
+          <div class="star-row readonly">${stars}</div>
+          ${b.review ? `<div style="font-size:12.5px; color:var(--steel);">${esc(b.review)}</div>` : ''}
+        </div>`;
+      } else {
+        ratingHTML = `<div class="rate-box" data-booking="${esc(b.id)}">
+          <div class="rate-title">Engineer ko rate karo</div>
+          <div class="star-row" data-rating="0">
+            ${[1,2,3,4,5].map(n => `<span class="star" data-value="${n}">★</span>`).join('')}
+          </div>
+          <textarea class="review-input" placeholder="Review likho (optional)"></textarea>
+          <button type="button" class="rate-submit-btn">Submit Rating</button>
+        </div>`;
+      }
+    }
+
     return `<div class="job-card">
       <div class="job-top">
         <span class="job-id">${esc(b.bookingNumber)}</span>
@@ -656,6 +720,7 @@
       ${engineerHTML}
       ${mapHTML}
       ${finalBillHTML}
+      ${ratingHTML}
     </div>`;
   }
 

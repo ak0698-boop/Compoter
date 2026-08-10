@@ -264,6 +264,7 @@
         <button class="avatar-edit-btn" id="avatar-edit-btn" type="button" title="Change photo">📷</button>
       </div>
     </div>
+    <div style="text-align:center; font-size:15px; font-weight:700; color:#F5A623; margin-bottom:16px;" id="f-rating">☆ No ratings yet</div>
     <input type="file" id="photo-input" accept="image/*" style="display:none;">
 
     <div class="card">
@@ -931,6 +932,9 @@
     document.getElementById('f-member-since').textContent = fmtMemberSince(p.createdAt);
     document.getElementById('f-city').textContent = p.city || '—';
     document.getElementById('f-status').textContent = p.status === 'active' ? '✅ Verified' : 'Pending verification';
+    document.getElementById('f-rating').textContent = p.avgRating
+      ? '★ ' + p.avgRating.toFixed(1) + ' (' + (p.ratingCount || 0) + ' reviews)'
+      : '☆ No ratings yet';
 
     const initialEl = document.getElementById('avatar-initial');
     const photoEl = document.getElementById('avatar-photo');

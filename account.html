@@ -118,9 +118,28 @@
     <a class="row" href="customer-login.html"><span>📋 My Bookings</span><span class="chev">›</span></a>
     <a class="row" href="booking.html"><span>➕ Book a New Service</span><span class="chev">›</span></a>
     <a class="row" href="contact.html"><span>💬 Help &amp; Support</span><span class="chev">›</span></a>
+    <div class="row" id="rate-app-row" style="cursor:pointer;"><span>⭐ Rate the App</span><span class="chev">›</span></div>
   </div>
 
   <button class="btn-signout" id="signout-btn">Sign Out</button>
+</div>
+
+<div id="rate-app-overlay" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(16,17,29,0.55); align-items:center; justify-content:center; padding:20px;">
+  <div style="background:#fff; border-radius:16px; max-width:360px; width:100%; padding:26px 24px; text-align:center;">
+    <h2 style="font-family:var(--display); font-size:18px; margin-bottom:14px;">Compoter App ko rate karo</h2>
+    <div id="rate-app-stars" style="display:flex; justify-content:center; gap:6px; margin-bottom:14px;">
+      <span class="app-star" data-value="1" style="font-size:30px; cursor:pointer; color:var(--line);">★</span>
+      <span class="app-star" data-value="2" style="font-size:30px; cursor:pointer; color:var(--line);">★</span>
+      <span class="app-star" data-value="3" style="font-size:30px; cursor:pointer; color:var(--line);">★</span>
+      <span class="app-star" data-value="4" style="font-size:30px; cursor:pointer; color:var(--line);">★</span>
+      <span class="app-star" data-value="5" style="font-size:30px; cursor:pointer; color:var(--line);">★</span>
+    </div>
+    <textarea id="rate-app-review" placeholder="Feedback likho (optional)" style="width:100%; border:1px solid var(--line); border-radius:8px; padding:10px; font-family:var(--body); font-size:13.5px; resize:vertical; min-height:60px; margin-bottom:14px;"></textarea>
+    <div style="display:flex; gap:10px;">
+      <button type="button" id="rate-app-cancel" style="flex:1; background:#fff; border:1.5px solid var(--line); color:var(--steel); font-weight:600; padding:11px; border-radius:8px; cursor:pointer;">Cancel</button>
+      <button type="button" id="rate-app-submit" style="flex:1; background:var(--indigo); border:none; color:#fff; font-weight:600; padding:11px; border-radius:8px; cursor:pointer;">Submit</button>
+    </div>
+  </div>
 </div>
 
 <input type="date" id="dob-input" style="position:absolute; opacity:0; pointer-events:none; width:1px; height:1px;">
@@ -128,7 +147,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { initializeFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { initializeFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
   import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
   const firebaseConfig = {
@@ -220,6 +239,52 @@
       if (!trimmed) return;
       saveField(field, trimmed);
     });
+  });
+
+  // ---------- Rate the App ----------
+  let appRatingValue = 0;
+  const rateAppOverlay = document.getElementById('rate-app-overlay');
+
+  document.getElementById('rate-app-row').addEventListener('click', () => {
+    appRatingValue = 0;
+    document.querySelectorAll('.app-star').forEach(s => s.style.color = 'var(--line)');
+    document.getElementById('rate-app-review').value = '';
+    rateAppOverlay.style.display = 'flex';
+  });
+
+  document.getElementById('rate-app-cancel').addEventListener('click', () => {
+    rateAppOverlay.style.display = 'none';
+  });
+
+  document.querySelectorAll('.app-star').forEach(star => {
+    star.addEventListener('click', () => {
+      appRatingValue = Number(star.dataset.value);
+      document.querySelectorAll('.app-star').forEach(s => {
+        s.style.color = Number(s.dataset.value) <= appRatingValue ? '#F5A623' : 'var(--line)';
+      });
+    });
+  });
+
+  document.getElementById('rate-app-submit').addEventListener('click', async () => {
+    if (!appRatingValue) { alert('Pehle stars par tap karo.'); return; }
+    const btn = document.getElementById('rate-app-submit');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+    try {
+      await addDoc(collection(db, 'appReviews'), {
+        name: profile.name || currentUser.phoneNumber || 'Compoter Customer',
+        rating: appRatingValue,
+        review: document.getElementById('rate-app-review').value.trim(),
+        createdAt: serverTimestamp()
+      });
+      rateAppOverlay.style.display = 'none';
+      alert('Dhanyawad! Aapka feedback mil gaya.');
+    } catch (err) {
+      console.error('app rating failed', err);
+      alert('Kuch gadbad ho gayi (' + (err.code || err.message) + ').');
+    }
+    btn.disabled = false;
+    btn.textContent = 'Submit';
   });
 
   document.getElementById('dob-input').addEventListener('change', (e) => {
