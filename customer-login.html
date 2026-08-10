@@ -90,6 +90,10 @@
   .engineer-name{font-weight:600; font-size:13px;}
   .engineer-call{display:inline-block; margin-top:4px; font-size:12.5px; color:var(--teal); font-weight:600;}
   .live-map{ height:180px; border-radius:8px; margin-top:10px; overflow:hidden; }
+  .final-bill-view{margin-top:10px; padding:12px; background:var(--paper); border:1px solid var(--line); border-radius:8px;}
+  .final-bill-view .fb-title{font-size:12.5px; font-weight:700; margin-bottom:6px;}
+  .final-bill-view .fb-row{display:flex; justify-content:space-between; font-size:12.5px; color:var(--steel); padding:3px 0;}
+  .final-bill-view .fb-row-total{display:flex; justify-content:space-between; font-size:13px; font-weight:700; color:var(--ink); border-top:1px solid var(--line); margin-top:6px; padding-top:8px;}
   .map-pin{
     background:#fff; border:2px solid var(--indigo); border-radius:50%;
     display:flex; align-items:center; justify-content:center; font-size:13px;
@@ -521,6 +525,14 @@
     const showMap = (b.status === 'on_the_way' || b.status === 'in_progress');
     const mapHTML = showMap ? `<div class="live-map" id="cust-map-${esc(b.id)}"></div>` : '';
 
+    const finalBillHTML = (b.finalBillItems && b.finalBillItems.length)
+      ? `<div class="final-bill-view">
+           <div class="fb-title">💰 Final Bill</div>
+           ${b.finalBillItems.map(i => `<div class="fb-row"><span>${esc(i.name)}</span><span>₹${Number(i.price).toLocaleString('en-IN')}</span></div>`).join('')}
+           <div class="fb-row-total"><span>Total</span><span>₹${Number(b.finalBillTotal || 0).toLocaleString('en-IN')}</span></div>
+         </div>`
+      : '';
+
     return `<div class="job-card">
       <div class="job-top">
         <span class="job-id">${esc(b.bookingNumber)}</span>
@@ -532,6 +544,7 @@
       <div class="steps">${steps}</div>
       ${engineerHTML}
       ${mapHTML}
+      ${finalBillHTML}
     </div>`;
   }
 

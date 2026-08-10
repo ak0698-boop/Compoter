@@ -110,6 +110,10 @@ function injectStyles(){
     .cptr-chat-engineer-call{ display:inline-block; margin-top:4px; font-size:12.5px; color:var(--teal,#14B8A6); font-weight:600; }
     .cptr-chat-card--cancelled .cptr-chat-card-title{ color:var(--red,#D6362C); }
     .cptr-live-map{ height:160px; border-radius:8px; margin-top:10px; overflow:hidden; }
+    .cptr-final-bill{ margin-top:10px; padding:10px 11px; background:var(--paper,#F8F9FC); border:1px solid var(--line,#E2E6E4); border-radius:8px; }
+    .cptr-final-bill-title{ font-size:12px; font-weight:700; margin-bottom:5px; }
+    .cptr-final-bill-row{ display:flex; justify-content:space-between; font-size:12px; color:var(--steel,#57677A); padding:2px 0; }
+    .cptr-final-bill-total{ display:flex; justify-content:space-between; font-size:12.5px; font-weight:700; border-top:1px solid var(--line,#E2E6E4); margin-top:5px; padding-top:6px; }
     .cptr-map-pin{
       background:#fff; border:2px solid var(--indigo,#3730A3); border-radius:50%;
       display:flex; align-items:center; justify-content:center; font-size:13px;
@@ -192,12 +196,21 @@ function buildStatusCardHTML(data, mapContainerId){
   const showLiveMap = (data.status === 'on_the_way' || data.status === 'in_progress') && mapContainerId;
   const mapHTML = showLiveMap ? `<div class="cptr-live-map" id="${esc(mapContainerId)}"></div>` : '';
 
+  const finalBillHTML = (data.finalBillItems && data.finalBillItems.length)
+    ? `<div class="cptr-final-bill">
+         <div class="cptr-final-bill-title">💰 Final Bill</div>
+         ${data.finalBillItems.map(i => `<div class="cptr-final-bill-row"><span>${esc(i.name)}</span><span>₹${Number(i.price).toLocaleString('en-IN')}</span></div>`).join('')}
+         <div class="cptr-final-bill-total"><span>Total</span><span>₹${Number(data.finalBillTotal || 0).toLocaleString('en-IN')}</span></div>
+       </div>`
+    : '';
+
   return `<div class="cptr-chat-card">
     <div class="cptr-chat-card-title">${esc(data.bookingNumber)} — ${esc(data.service)}</div>
     <div class="cptr-chat-card-sub">${esc(data.city)} • ${esc(data.date || 'Date TBD')} ${esc(data.time || '')}</div>
     <div class="cptr-steps">${steps}</div>
     ${engineerHTML}
     ${mapHTML}
+    ${finalBillHTML}
   </div>`;
 }
 
