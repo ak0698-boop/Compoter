@@ -95,6 +95,18 @@
     background:var(--paper); border-radius:8px; padding:10px 12px; font-size:13px; color:var(--ink);
     margin:12px 0; white-space:pre-wrap;
   }
+  .final-bill{background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px; margin:12px 0;}
+  .final-bill-title{font-size:13px; font-weight:700; margin-bottom:8px;}
+  .fb-item-row{display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:5px 0; border-bottom:1px solid var(--line);}
+  .fb-item-row:last-child{border-bottom:none;}
+  .fb-item-row .fb-price-val{display:flex; align-items:center; gap:8px;}
+  .fb-remove{color:var(--red); cursor:pointer; font-weight:700;}
+  .final-bill-add{display:flex; gap:8px; margin-top:10px;}
+  .final-bill-add input{flex:1; min-width:0; padding:8px 10px; border:1px solid var(--line); border-radius:6px; font-size:13px; font-family:var(--body);}
+  .final-bill-add input.fb-price-input{flex:0 0 90px;}
+  .fb-add-btn{padding:8px 14px; border-radius:6px; border:none; background:var(--indigo-soft); color:var(--indigo); font-weight:600; font-size:13px; cursor:pointer; white-space:nowrap;}
+  .final-bill-total{margin-top:10px; font-weight:700; font-size:14px; border-top:1px solid var(--line); padding-top:10px;}
+
   .job-actions{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;}
   .action-btn{
     font-family:var(--body); font-weight:700; font-size:13.5px; padding:11px 18px; border-radius:8px;
@@ -641,6 +653,28 @@
         ? `<div class="job-row"><b>Estimated Total:</b> ₹${Number(b.totalEstimate).toLocaleString('en-IN')} (incl. visiting/labour ₹${(b.labourCharge || 0).toLocaleString('en-IN')})</div>`
         : '';
 
+      const finalBillItems = b.finalBillItems || [];
+      const finalBillTotal = finalBillItems.reduce((s, i) => s + Number(i.price || 0), 0);
+      const finalBillHTML = (b.status === 'on_the_way' || b.status === 'in_progress') ? `
+        <div class="final-bill" data-booking="${esc(b.id)}">
+          <div class="final-bill-title">💰 Final Bill — add items as you work (current market price)</div>
+          <div class="fb-items">
+            ${finalBillItems.map((i, idx) => `
+              <div class="fb-item-row">
+                <span>${esc(i.name)}</span>
+                <span class="fb-price-val">₹${Number(i.price).toLocaleString('en-IN')}<span class="fb-remove" data-booking="${esc(b.id)}" data-idx="${idx}">✕</span></span>
+              </div>
+            `).join('')}
+          </div>
+          <div class="final-bill-add">
+            <input type="text" class="fb-name-input" placeholder="Item name (e.g. RAM 8GB)">
+            <input type="number" class="fb-price-input" placeholder="Price" min="0">
+            <button type="button" class="fb-add-btn" data-booking="${esc(b.id)}">+ Add</button>
+          </div>
+          <div class="final-bill-total">Final Bill Total: ₹${finalBillTotal.toLocaleString('en-IN')}</div>
+        </div>
+      ` : '';
+
       return `<div class="job-card">
         <div class="job-top">
           <span class="job-id">${esc(b.bookingNumber)}</span>
@@ -654,12 +688,62 @@
         ${addOnsHTML}
         ${totalHTML}
         <div class="job-desc">${esc(b.description)}</div>
+        ${finalBillHTML}
         <div class="job-actions">${actionBtn}${declineBtn}${callLink}${directionsLink}</div>
       </div>`;
     }).join('');
   }
 
   jobsList.addEventListener('click', async (e) => {
+    const fbAddBtn = e.target.closest('.fb-add-btn');
+    if (fbAddBtn) {
+      const bookingId = fbAddBtn.dataset.booking;
+      const card = fbAddBtn.closest('.final-bill');
+      const nameInput = card.querySelector('.fb-name-input');
+      const priceInput = card.querySelector('.fb-price-input');
+      const name = nameInput.value.trim();
+      const price = Number(priceInput.value);
+      if (!name || !price || price <= 0) {
+        alert('Item ka naam aur sahi price daalein.');
+        return;
+      }
+      fbAddBtn.disabled = true;
+      const booking = currentJobs.find(j => j.id === bookingId);
+      const items = [...(booking?.finalBillItems || []), { name, price }];
+      const total = items.reduce((sum, i) => sum + Number(i.price), 0);
+      try {
+        await updateDoc(doc(db, 'bookings', bookingId), {
+          finalBillItems: items,
+          finalBillTotal: total,
+          updatedAt: serverTimestamp()
+        });
+      } catch (err) {
+        console.error('Final bill update failed:', err);
+        alert('Item add nahi ho paya (' + (err.code || err.message) + ').');
+      }
+      fbAddBtn.disabled = false;
+      return;
+    }
+
+    const fbRemoveBtn = e.target.closest('.fb-remove');
+    if (fbRemoveBtn) {
+      const bookingId = fbRemoveBtn.dataset.booking;
+      const idx = Number(fbRemoveBtn.dataset.idx);
+      const booking = currentJobs.find(j => j.id === bookingId);
+      const items = (booking?.finalBillItems || []).filter((_, i) => i !== idx);
+      const total = items.reduce((sum, i) => sum + Number(i.price), 0);
+      try {
+        await updateDoc(doc(db, 'bookings', bookingId), {
+          finalBillItems: items,
+          finalBillTotal: total,
+          updatedAt: serverTimestamp()
+        });
+      } catch (err) {
+        console.error('Final bill remove failed:', err);
+      }
+      return;
+    }
+
     const declineBtn = e.target.closest('.decline-btn');
     if (declineBtn) {
       if (!confirm("Sure aap ye job nahi le sakte? Ye kisi doosre nazdeeki engineer ko re-assign ho jayegi.")) return;
