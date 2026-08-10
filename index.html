@@ -378,6 +378,30 @@
   </div>
 </footer>
 
+<div id="promo-overlay" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(16,17,29,0.55); align-items:center; justify-content:center; padding:20px;">
+  <div style="background:#fff; border-radius:18px; max-width:380px; width:100%; padding:32px 28px; text-align:center; position:relative; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <button id="promo-close" type="button" aria-label="Close" style="position:absolute; top:14px; right:14px; width:30px; height:30px; border-radius:50%; border:none; background:#F1F0FC; color:#3730A3; font-size:16px; font-weight:700; cursor:pointer;">✕</button>
+    <div style="font-size:40px; margin-bottom:10px;">🎉</div>
+    <h2 style="font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:21px; margin-bottom:8px; color:#101820;">Launch Offer!</h2>
+    <p style="color:#57677A; font-size:14.5px; margin-bottom:18px;">Get <b>20% OFF</b> your first booking — verified engineer, on-site, hassle-free.</p>
+    <div style="background:#EDECFB; border:1.5px dashed #3730A3; border-radius:10px; padding:12px; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:17px; color:#3730A3; letter-spacing:0.05em; margin-bottom:18px;">WELCOME20</div>
+    <a href="booking.html" style="display:block; background:#14B8A6; color:#fff; font-weight:600; font-size:15px; padding:13px; border-radius:9px; text-decoration:none;">Book Now →</a>
+  </div>
+</div>
+
+<script>
+  (function(){
+    if (sessionStorage.getItem('cptr-promo-shown')) return;
+    setTimeout(function(){
+      sessionStorage.setItem('cptr-promo-shown', '1');
+      const overlay = document.getElementById('promo-overlay');
+      overlay.style.display = 'flex';
+      document.getElementById('promo-close').addEventListener('click', () => overlay.style.display = 'none');
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.style.display = 'none'; });
+    }, 1500);
+  })();
+</script>
+
 <script type="module" src="chatbot.js"></script>
 <script src="capacitor-back.js"></script>
 </body>
