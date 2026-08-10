@@ -195,12 +195,18 @@
       <div class="field"><label for="s-city">City / Service Area</label><input type="text" id="s-city" placeholder="e.g. Noida, Delhi NCR"></div>
       <div class="field"><label for="s-experience">Years of Experience</label><input type="number" id="s-experience" min="0" placeholder="e.g. 3"></div>
       <div class="field">
-        <label>Skills / Areas of Expertise</label>
+        <label>Skills / Areas of Expertise (jo bhi apply ho, sab select karo — leads usi hisaab se milengi)</label>
         <div class="skills-grid">
-          <div class="skill-check"><input type="checkbox" id="skill-cyber" value="Cybersecurity"><label for="skill-cyber">Cybersecurity</label></div>
-          <div class="skill-check"><input type="checkbox" id="skill-hardware" value="Hardware"><label for="skill-hardware">Computer Hardware</label></div>
-          <div class="skill-check"><input type="checkbox" id="skill-network" value="Networking"><label for="skill-network">Networking</label></div>
-          <div class="skill-check"><input type="checkbox" id="skill-backup" value="Backup & Storage"><label for="skill-backup">Backup &amp; Storage</label></div>
+          <div class="skill-check"><input type="checkbox" id="skill-Computer" value="Computer"><label for="skill-Computer">Computer &amp; Laptop Repair</label></div>
+          <div class="skill-check"><input type="checkbox" id="skill-Printer" value="Printer"><label for="skill-Printer">Printer Repair</label></div>
+          <div class="skill-check"><input type="checkbox" id="skill-CCTV" value="CCTV"><label for="skill-CCTV">CCTV Installation</label></div>
+          <div class="skill-check"><input type="checkbox" id="skill-Networking" value="Networking"><label for="skill-Networking">Networking &amp; WiFi</label></div>
+          <div class="skill-check"><input type="checkbox" id="skill-Server" value="Server"><label for="skill-Server">Server Support</label></div>
+          <div class="skill-check"><input type="checkbox" id="skill-NAS" value="NAS"><label for="skill-NAS">NAS Installation</label></div>
+          <div class="skill-check"><input type="checkbox" id="skill-Firewall" value="Firewall"><label for="skill-Firewall">Firewall Setup</label></div>
+          <div class="skill-check"><input type="checkbox" id="skill-AMC" value="AMC"><label for="skill-AMC">Office IT AMC</label></div>
+          <div class="skill-check"><input type="checkbox" id="skill-Home" value="Home"><label for="skill-Home">Home IT Support</label></div>
+          <div class="skill-check"><input type="checkbox" id="skill-DataRecovery" value="DataRecovery"><label for="skill-DataRecovery">Data Recovery</label></div>
         </div>
       </div>
       <div class="field">
@@ -482,7 +488,7 @@
     }
 
     const skills = [];
-    ['skill-cyber', 'skill-hardware', 'skill-network', 'skill-backup'].forEach(id => {
+    ['skill-Computer', 'skill-Printer', 'skill-CCTV', 'skill-Networking', 'skill-Server', 'skill-NAS', 'skill-Firewall', 'skill-AMC', 'skill-Home', 'skill-DataRecovery'].forEach(id => {
       const el = document.getElementById(id);
       if (el.checked) skills.push(el.value);
     });

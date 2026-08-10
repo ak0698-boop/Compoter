@@ -514,7 +514,7 @@
       const location = savedLocation;
 
       await setDoc(doc(db, "bookings", bookingNumber), {
-        bookingNumber, name, phone, phoneKey, email, city, address, service, estimatedPrice, labourCharge, addOns, addOnsTotal, couponCode, discountAmount, totalEstimate, date, time, description,
+        bookingNumber, name, phone, phoneKey, email, city, address, service, serviceCode: serviceSelect.value, estimatedPrice, labourCharge, addOns, addOnsTotal, couponCode, discountAmount, totalEstimate, date, time, description,
         status: 'pending',
         assignedEngineer: '',
         assignedEngineerPhone: '',
