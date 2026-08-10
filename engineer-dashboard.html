@@ -567,6 +567,48 @@
     );
   }
 
+  // Registers this device for push notifications (native app only — no-op on
+  // the plain website) so a new lead pings the engineer's phone with a
+  // heads-up alert + sound even if the app is closed/phone is locked.
+  let pushSetupDone = false;
+  async function setupPushNotifications(engineerDocId){
+    if (pushSetupDone) return;
+    if (!window.Capacitor || !window.Capacitor.Plugins || !window.Capacitor.Plugins.PushNotifications) return;
+    pushSetupDone = true;
+    const Push = window.Capacitor.Plugins.PushNotifications;
+
+    try {
+      await Push.createChannel({
+        id: 'job_alerts',
+        name: 'New Job Alerts',
+        description: 'Naya lead assign hone par alert',
+        importance: 5,
+        visibility: 1,
+        vibration: true
+      });
+    } catch (err) {
+      console.error('notification channel create failed', err);
+    }
+
+    try {
+      let permStatus = await Push.checkPermissions();
+      if (permStatus.receive !== 'granted') {
+        permStatus = await Push.requestPermissions();
+      }
+      if (permStatus.receive !== 'granted') return;
+
+      await Push.register();
+
+      Push.addListener('registration', (token) => {
+        updateDoc(doc(db, 'engineers', engineerDocId), { fcmToken: token.value })
+          .catch(err => console.error('fcm token save failed', err));
+      });
+      Push.addListener('registrationError', (err) => console.error('push registration error', err));
+    } catch (err) {
+      console.error('push setup failed', err);
+    }
+  }
+
   onAuthStateChanged(auth, async (user) => {
     if (jobsUnsub) { jobsUnsub(); jobsUnsub = null; }
     stopLocationTracking();
@@ -627,6 +669,7 @@
     renderProfileView();
 
     startLocationTracking(engineerDoc.id);
+    setupPushNotifications(engineerDoc.id);
 
     jobsUnsub = onSnapshot(
       query(collection(db, 'bookings'), where('assignedEngineerUid', '==', user.uid)),
