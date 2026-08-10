@@ -274,7 +274,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { initializeFirestore, doc, addDoc, updateDoc, collection, query, where, onSnapshot, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { initializeFirestore, doc, addDoc, updateDoc, collection, query, where, onSnapshot, getDocs, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
   import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
   const firebaseConfig = {
@@ -622,6 +622,9 @@
       const actionBtn = flow
         ? `<button class="action-btn" data-booking="${esc(b.id)}" data-next="${flow.next}">${flow.label}</button>`
         : '';
+      const declineBtn = b.status === 'assigned'
+        ? `<button class="action-btn decline-btn" data-booking="${esc(b.id)}" style="background:#fff; color:var(--red); border:1.5px solid var(--red);">✕ Can't take this job</button>`
+        : '';
       const callLink = b.phone
         ? `<a class="call-link" href="tel:${esc(b.phone)}">📞 Call Customer</a>`
         : '';
@@ -651,12 +654,33 @@
         ${addOnsHTML}
         ${totalHTML}
         <div class="job-desc">${esc(b.description)}</div>
-        <div class="job-actions">${actionBtn}${callLink}${directionsLink}</div>
+        <div class="job-actions">${actionBtn}${declineBtn}${callLink}${directionsLink}</div>
       </div>`;
     }).join('');
   }
 
   jobsList.addEventListener('click', async (e) => {
+    const declineBtn = e.target.closest('.decline-btn');
+    if (declineBtn) {
+      if (!confirm("Sure aap ye job nahi le sakte? Ye kisi doosre nazdeeki engineer ko re-assign ho jayegi.")) return;
+      declineBtn.disabled = true;
+      const bookingId = declineBtn.dataset.booking;
+      try {
+        await updateDoc(doc(db, 'bookings', bookingId), {
+          status: 'pending',
+          assignedEngineer: '',
+          assignedEngineerPhone: '',
+          assignedEngineerUid: '',
+          declinedBy: arrayUnion(currentEngineerUser.uid),
+          updatedAt: serverTimestamp()
+        });
+      } catch (err) {
+        console.error('Decline failed:', err);
+        declineBtn.disabled = false;
+      }
+      return;
+    }
+
     const btn = e.target.closest('.action-btn');
     if (!btn) return;
     btn.disabled = true;
