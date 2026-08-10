@@ -146,6 +146,37 @@
       <p class="hint">Our team will verify this with you before activating your account. No documents are uploaded here.</p>
     </div>
 
+    <div class="field">
+      <label for="e-police-verification">Police Verification Number</label>
+      <input type="text" id="e-police-verification" placeholder="Certificate / reference number (if available)">
+      <p class="hint">Agar abhi tak nahi karwaya, khali chhod do — verification ke baad hamari team se le sakte hain.</p>
+    </div>
+
+    <div class="field">
+      <label>Bank Details (payout ke liye)</label>
+      <div class="form-row">
+        <input type="text" id="e-bank-holder" placeholder="Account Holder Name">
+        <input type="text" id="e-bank-account" placeholder="Account Number">
+      </div>
+      <input type="text" id="e-bank-ifsc" placeholder="IFSC Code (e.g. HDFC0001234)" style="text-transform:uppercase;">
+    </div>
+
+    <div class="field">
+      <label>Reference 1</label>
+      <div class="form-row">
+        <input type="text" id="e-ref1-name" placeholder="Name">
+        <input type="tel" id="e-ref1-phone" placeholder="Phone number">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Reference 2</label>
+      <div class="form-row">
+        <input type="text" id="e-ref2-name" placeholder="Name">
+        <input type="tel" id="e-ref2-phone" placeholder="Phone number">
+      </div>
+    </div>
+
     <div class="field"><label for="e-notes">Anything else we should know?</label><textarea id="e-notes" placeholder="Certifications, past experience, availability, etc. (optional)"></textarea></div>
 
     <div class="field" style="background:#FEF3C7; border:1px solid #F5C067; border-radius:8px; padding:14px;">
@@ -211,12 +242,20 @@
       if (el.checked) skills.push(el.value);
     });
 
+    const policeVerificationNumber = document.getElementById('e-police-verification').value.trim();
+    const bankAccountHolder = document.getElementById('e-bank-holder').value.trim();
+    const bankAccountNumber = document.getElementById('e-bank-account').value.trim();
+    const bankIfsc = document.getElementById('e-bank-ifsc').value.trim().toUpperCase();
+    const reference1 = { name: document.getElementById('e-ref1-name').value.trim(), phone: document.getElementById('e-ref1-phone').value.trim() };
+    const reference2 = { name: document.getElementById('e-ref2-name').value.trim(), phone: document.getElementById('e-ref2-phone').value.trim() };
+
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
 
       await addDoc(collection(db, "engineers"), {
         uid: cred.user.uid,
         name, email, phone, city, experience, skills, idType, idNumber, notes,
+        policeVerificationNumber, bankAccountHolder, bankAccountNumber, bankIfsc, reference1, reference2,
         status: 'pending',
         createdAt: serverTimestamp()
       });

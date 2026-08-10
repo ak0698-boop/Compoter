@@ -173,7 +173,7 @@
         <table>
           <thead>
             <tr>
-              <th>Name</th><th>Contact</th><th>City</th><th>Experience</th><th>Skills</th><th>Rating</th><th>Status</th>
+              <th>Name</th><th>Contact</th><th>City</th><th>Experience</th><th>Skills</th><th>Rating</th><th>Verification</th><th>Status</th>
             </tr>
           </thead>
           <tbody id="engineers-tbody"></tbody>
@@ -535,6 +535,12 @@
         <td data-label="Experience">${esc(e.experience)} yrs</td>
         <td data-label="Skills">${esc((e.skills || []).join(', ') || '—')}</td>
         <td data-label="Rating">${e.avgRating ? '★ ' + Number(e.avgRating).toFixed(1) + ' (' + (e.ratingCount || 0) + ')' : '—'}</td>
+        <td data-label="Verification">
+          <div class="cell-sub">Police: ${esc(e.policeVerificationNumber) || '—'}</div>
+          <div class="cell-sub">Bank: ${esc(e.bankAccountHolder) || '—'} ${e.bankAccountNumber ? '(' + esc(e.bankAccountNumber) + ', ' + esc(e.bankIfsc) + ')' : ''}</div>
+          <div class="cell-sub">Ref 1: ${esc(e.reference1?.name)} ${e.reference1?.phone ? '(' + esc(e.reference1.phone) + ')' : ''}</div>
+          <div class="cell-sub">Ref 2: ${esc(e.reference2?.name)} ${e.reference2?.phone ? '(' + esc(e.reference2.phone) + ')' : ''}</div>
+        </td>
         <td data-label="Status">${statusSelect}</td>
       </tr>`;
     }).join('');

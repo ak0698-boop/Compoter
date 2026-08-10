@@ -218,6 +218,37 @@
         </select>
       </div>
       <div class="field"><label for="s-id-number">ID Proof Number</label><input type="text" id="s-id-number" placeholder="ID number"></div>
+
+      <div class="field">
+        <label for="s-police-verification">Police Verification Number</label>
+        <input type="text" id="s-police-verification" placeholder="Certificate / reference number (if available)">
+      </div>
+
+      <div class="field">
+        <label>Bank Details (payout ke liye)</label>
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <input type="text" id="s-bank-holder" placeholder="Account Holder Name" style="flex:1;">
+          <input type="text" id="s-bank-account" placeholder="Account Number" style="flex:1;">
+        </div>
+        <input type="text" id="s-bank-ifsc" placeholder="IFSC Code (e.g. HDFC0001234)" style="text-transform:uppercase;">
+      </div>
+
+      <div class="field">
+        <label>Reference 1</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="s-ref1-name" placeholder="Name" style="flex:1;">
+          <input type="tel" id="s-ref1-phone" placeholder="Phone number" style="flex:1;">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Reference 2</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="s-ref2-name" placeholder="Name" style="flex:1;">
+          <input type="tel" id="s-ref2-phone" placeholder="Phone number" style="flex:1;">
+        </div>
+      </div>
+
       <div class="field"><label for="s-notes">Anything else? (optional)</label><textarea id="s-notes" placeholder="Certifications, availability, etc."></textarea></div>
 
       <div class="field" style="background:#FEF3C7; border:1px solid #F5C067; border-radius:8px; padding:14px;">
@@ -508,12 +539,20 @@
       if (el.checked) skills.push(el.value);
     });
 
+    const policeVerificationNumber = document.getElementById('s-police-verification').value.trim();
+    const bankAccountHolder = document.getElementById('s-bank-holder').value.trim();
+    const bankAccountNumber = document.getElementById('s-bank-account').value.trim();
+    const bankIfsc = document.getElementById('s-bank-ifsc').value.trim().toUpperCase();
+    const reference1 = { name: document.getElementById('s-ref1-name').value.trim(), phone: document.getElementById('s-ref1-phone').value.trim() };
+    const reference2 = { name: document.getElementById('s-ref2-name').value.trim(), phone: document.getElementById('s-ref2-phone').value.trim() };
+
     saveSignupBtn.disabled = true;
     saveSignupBtn.textContent = 'Submitting...';
     try {
       await addDoc(collection(db, 'engineers'), {
         uid: pendingUser.uid,
         name, email, city, experience, skills, idType, idNumber, notes,
+        policeVerificationNumber, bankAccountHolder, bankAccountNumber, bankIfsc, reference1, reference2,
         phone: pendingUser.phoneNumber,
         status: 'pending',
         createdAt: serverTimestamp()
