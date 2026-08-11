@@ -124,7 +124,7 @@
 
     <div id="phone-step">
       <h1>Login / Sign Up</h1>
-      <p class="sub">Apna phone number daalo, hum OTP bhejenge — naya number ho to account bhi ban jayega.</p>
+      <p class="sub">Enter your phone number, we'll send you an OTP — a new account will be created automatically if needed.</p>
       <div class="field">
         <label for="phone-input">Phone Number</label>
         <div class="phone-row">
@@ -150,7 +150,7 @@
 
     <div id="name-step" style="display:none;">
       <h1>What's your name?</h1>
-      <p class="sub">Taaki hum aapko sahi se pehchan sakein.</p>
+      <p class="sub">So we can identify you correctly.</p>
       <div class="field">
         <label for="name-input">Full Name</label>
         <input type="text" id="name-input" placeholder="Your name">
@@ -179,7 +179,7 @@
   <div class="wrap" style="padding-top:28px; padding-bottom:40px;">
     <a href="booking.html" class="btn" style="display:block; text-align:center; text-decoration:none; margin-bottom:24px;">+ Book a New Service</a>
     <div id="jobs-list"></div>
-    <div class="empty" id="jobs-empty" style="display:none;">Abhi koi booking nahi mili is account se.</div>
+    <div class="empty" id="jobs-empty" style="display:none;">No bookings found for this account yet.</div>
   </div>
 </div>
 
@@ -296,7 +296,7 @@
     const digits = phoneInput.value.replace(/\D/g, '');
     phoneError.classList.remove('show');
     if (digits.length !== 10) {
-      phoneError.textContent = 'Sahi 10-digit phone number daalein.';
+      phoneError.textContent = 'Enter a valid 10-digit phone number.';
       phoneError.classList.add('show');
       return;
     }
@@ -305,13 +305,13 @@
     try {
       const fullNumber = '+91' + digits;
       confirmationResult = await signInWithPhoneNumber(auth, fullNumber, getRecaptcha());
-      otpSub.textContent = fullNumber + ' par OTP bheja gaya hai.';
+      otpSub.textContent = 'OTP sent to ' + fullNumber + '.';
       otpInput.value = '';
       showStep(otpStep);
       otpInput.focus();
     } catch (err) {
       console.error(err);
-      phoneError.textContent = 'OTP bhejne me dikkat (' + (err.code || err.message) + ').';
+      phoneError.textContent = 'Trouble sending OTP (' + (err.code || err.message) + ').';
       phoneError.classList.add('show');
     } finally {
       sendOtpBtn.disabled = false;
@@ -331,7 +331,7 @@
     const code = otpInput.value.trim();
     otpError.classList.remove('show');
     if (code.length !== 6) {
-      otpError.textContent = '6-digit OTP daalein.';
+      otpError.textContent = 'Enter the 6-digit OTP.';
       otpError.classList.add('show');
       return;
     }
@@ -344,7 +344,7 @@
     } catch (err) {
       console.error(err);
       justAuthenticated = false;
-      otpError.textContent = 'Galat OTP ya network dikkat (' + (err.code || err.message) + '). Dobara try karo.';
+      otpError.textContent = 'Incorrect OTP or a network issue (' + (err.code || err.message) + '). Please try again.';
       otpError.classList.add('show');
       verifyOtpBtn.disabled = false;
       verifyOtpBtn.textContent = 'Verify & Continue';
@@ -358,12 +358,12 @@
     const email = emailInput.value.trim();
     nameError.classList.remove('show');
     if (!name) {
-      nameError.textContent = 'Naam daalein.';
+      nameError.textContent = 'Enter your name.';
       nameError.classList.add('show');
       return;
     }
     if (!email || !email.includes('@')) {
-      nameError.textContent = 'Sahi email daalein.';
+      nameError.textContent = 'Enter a valid email.';
       nameError.classList.add('show');
       return;
     }
@@ -385,7 +385,7 @@
       return;
     } catch (err) {
       console.error(err);
-      nameError.textContent = 'Kuch gadbad ho gayi (' + (err.code || err.message) + ').';
+      nameError.textContent = 'Something went wrong (' + (err.code || err.message) + ').';
       nameError.classList.add('show');
       saveNameBtn.disabled = false;
       saveNameBtn.textContent = 'Continue';
@@ -440,7 +440,7 @@
     doc.text(`₹${Number(total).toLocaleString('en-IN')}`, 180, y, { align: 'right' });
     y += 14;
     doc.setFontSize(10);
-    doc.text('Dhanyawad, Compoter choose karne ke liye!', 14, y);
+    doc.text('Thank you for choosing Compoter!', 14, y);
 
     doc.save(`Invoice-${b.bookingNumber}.pdf`);
   }
@@ -470,7 +470,7 @@
       const bookingId = box.dataset.booking;
       const rating = Number(box.querySelector('.star-row').dataset.rating);
       const review = box.querySelector('.review-input').value.trim();
-      if (!rating) { alert('Pehle stars par tap karke rating do.'); return; }
+      if (!rating) { alert('Tap the stars to give a rating first.'); return; }
       submitBtn.disabled = true;
       submitBtn.textContent = 'Submitting...';
       try {
@@ -479,7 +479,7 @@
         });
       } catch (err) {
         console.error('rating submit failed', err);
-        alert('Rating submit nahi ho payi (' + (err.code || err.message) + ').');
+        alert('Could not submit rating (' + (err.code || err.message) + ').');
         submitBtn.disabled = false;
         submitBtn.textContent = 'Submit Rating';
       }
@@ -518,8 +518,8 @@
       console.error('customer profile lookup failed', err);
       const alreadyRetried = sessionStorage.getItem('cptr-profile-retry') === '1';
       otpError.textContent = alreadyRetried
-        ? 'Profile load nahi ho pa raha (' + (err.code || err.message) + '). Firestore rules check karein.'
-        : 'Login ho gaya, lekin profile load karne me dikkat (' + (err.code || err.message) + '). Dobara try ho raha hai...';
+        ? 'Unable to load profile (' + (err.code || err.message) + '). Please check your connection.'
+        : 'Logged in, but there was a problem loading your profile (' + (err.code || err.message) + '). Retrying...';
       otpError.classList.add('show');
       showStep(otpStep);
       if (!alreadyRetried) {
@@ -669,7 +669,7 @@
            <div class="engineer-name">🧑‍🔧 ${esc(b.assignedEngineer)}</div>
            ${b.assignedEngineerPhone ? `<a class="engineer-call" href="tel:${esc(b.assignedEngineerPhone)}">📞 Call Engineer</a>` : ''}
          </div>`
-      : `<div class="engineer-box engineer-box--pending">Engineer jald hi assign kiya jayega.</div>`;
+      : `<div class="engineer-box engineer-box--pending">An engineer will be assigned shortly.</div>`;
 
     const showMap = (b.status === 'on_the_way' || b.status === 'in_progress');
     const mapHTML = showMap ? `<div class="live-map" id="cust-map-${esc(b.id)}"></div>` : '';
@@ -693,17 +693,17 @@
       if (b.rating) {
         const stars = [1,2,3,4,5].map(n => `<span class="star${n <= b.rating ? ' filled' : ''}">★</span>`).join('');
         ratingHTML = `<div class="rate-box">
-          <div class="rate-title">Aapki rating</div>
+          <div class="rate-title">Your rating</div>
           <div class="star-row readonly">${stars}</div>
           ${b.review ? `<div style="font-size:12.5px; color:var(--steel);">${esc(b.review)}</div>` : ''}
         </div>`;
       } else {
         ratingHTML = `<div class="rate-box" data-booking="${esc(b.id)}">
-          <div class="rate-title">Engineer ko rate karo</div>
+          <div class="rate-title">Rate the engineer</div>
           <div class="star-row" data-rating="0">
             ${[1,2,3,4,5].map(n => `<span class="star" data-value="${n}">★</span>`).join('')}
           </div>
-          <textarea class="review-input" placeholder="Review likho (optional)"></textarea>
+          <textarea class="review-input" placeholder="Write a review (optional)"></textarea>
           <button type="button" class="rate-submit-btn">Submit Rating</button>
         </div>`;
       }

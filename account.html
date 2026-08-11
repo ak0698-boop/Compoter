@@ -234,7 +234,7 @@
       const label = field === 'emergencyContact' ? 'Emergency contact number'
         : field === 'gender' ? 'Gender (Male / Female / Other)'
         : field.charAt(0).toUpperCase() + field.slice(1);
-      const value = prompt(label + ' likhein:', profile[field] || '');
+      const value = prompt('Enter ' + label + ':', profile[field] || '');
       if (value === null) return;
       const trimmed = value.trim();
       if (!trimmed) return;
@@ -318,7 +318,7 @@
       await saveField('photoURL', url);
     } catch (err) {
       console.error('photo upload failed', err);
-      alert('Photo upload nahi ho paya (' + (err.code || err.message) + ').');
+      alert('Photo upload failed (' + (err.code || err.message) + ').');
     }
   });
 

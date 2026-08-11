@@ -164,7 +164,7 @@
 
     <div id="phone-step">
       <h1>Engineer Login</h1>
-      <p class="sub">Apna phone number daalo, hum OTP bhejenge.</p>
+      <p class="sub">Enter your phone number, we'll send you an OTP.</p>
       <div class="field">
         <label for="phone-input">Phone Number</label>
         <div class="phone-row">
@@ -190,13 +190,13 @@
 
     <div id="signup-step" style="display:none;">
       <h1>Complete Your Profile</h1>
-      <p class="sub">Ye details hamari team verify karegi, uske baad hi jobs milni shuru hongi.</p>
+      <p class="sub">Our team will verify these details before you start receiving jobs.</p>
       <div class="field"><label for="s-name">Full Name</label><input type="text" id="s-name" placeholder="Your full name"></div>
       <div class="field"><label for="s-email">Email</label><input type="email" id="s-email" placeholder="you@example.com"></div>
       <div class="field"><label for="s-city">City / Service Area</label><input type="text" id="s-city" placeholder="e.g. Noida, Delhi NCR"></div>
       <div class="field"><label for="s-experience">Years of Experience</label><input type="number" id="s-experience" min="0" placeholder="e.g. 3"></div>
       <div class="field">
-        <label>Skills / Areas of Expertise (jo bhi apply ho, sab select karo — leads usi hisaab se milengi)</label>
+        <label>Skills / Areas of Expertise (select all that apply — leads are matched to your skills)</label>
         <div class="skills-grid">
           <div class="skill-check"><input type="checkbox" id="skill-Computer" value="Computer"><label for="skill-Computer">Computer &amp; Laptop Repair</label></div>
           <div class="skill-check"><input type="checkbox" id="skill-Printer" value="Printer"><label for="skill-Printer">Printer Repair</label></div>
@@ -226,7 +226,7 @@
       </div>
 
       <div class="field">
-        <label>Bank Details (payout ke liye)</label>
+        <label>Bank Details (for payouts)</label>
         <div style="display:flex; gap:8px; margin-bottom:8px;">
           <input type="text" id="s-bank-holder" placeholder="Account Holder Name" style="flex:1;">
           <input type="text" id="s-bank-account" placeholder="Account Number" style="flex:1;">
@@ -255,7 +255,7 @@
       <div class="field" style="background:#FEF3C7; border:1px solid #F5C067; border-radius:8px; padding:14px;">
         <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; font-weight:500; font-size:13.5px;">
           <input type="checkbox" id="s-commission-ack" style="margin-top:3px; width:auto;">
-          <span>Main samajhta/samajhti hoon ki <b>Compoter har completed job ke total amount ka 20% commission</b> leta hai — baaki 80% mera payout hoga.</span>
+          <span>I understand that <b>Compoter charges a 20% commission</b> on the total amount of every completed job — the remaining 80% is my payout.</span>
         </label>
       </div>
 
@@ -283,7 +283,7 @@
 
   <div class="wrap" id="jobs-section">
     <div class="pending-banner" id="pending-banner">
-      Aapka account abhi verify ho raha hai — jab Compoter team approve kar degi, tab aapko jobs milni shuru hongi.
+      Your account is being verified — once the Compoter team approves it, you'll start receiving jobs.
     </div>
     <div id="jobs-list"></div>
     <div class="empty" id="jobs-empty" style="display:none;">Abhi koi job assign nahi hui hai.</div>
@@ -454,7 +454,7 @@
     const digits = phoneInput.value.replace(/\D/g, '');
     phoneError.classList.remove('show');
     if (digits.length !== 10) {
-      phoneError.textContent = 'Sahi 10-digit phone number daalein.';
+      phoneError.textContent = 'Enter a valid 10-digit phone number.';
       phoneError.classList.add('show');
       return;
     }
@@ -463,13 +463,13 @@
     try {
       const fullNumber = '+91' + digits;
       confirmationResult = await signInWithPhoneNumber(auth, fullNumber, getRecaptcha());
-      otpSub.textContent = fullNumber + ' par OTP bheja gaya hai.';
+      otpSub.textContent = 'OTP sent to ' + fullNumber + '.';
       otpInput.value = '';
       showStep(otpStep);
       otpInput.focus();
     } catch (err) {
       console.error(err);
-      phoneError.textContent = 'OTP bhejne me dikkat (' + (err.code || err.message) + ').';
+      phoneError.textContent = 'Trouble sending OTP (' + (err.code || err.message) + ').';
       phoneError.classList.add('show');
     } finally {
       sendOtpBtn.disabled = false;
@@ -487,7 +487,7 @@
     const code = otpInput.value.trim();
     otpError.classList.remove('show');
     if (code.length !== 6) {
-      otpError.textContent = '6-digit OTP daalein.';
+      otpError.textContent = 'Enter the 6-digit OTP.';
       otpError.classList.add('show');
       return;
     }
@@ -498,7 +498,7 @@
       // onAuthStateChanged takes over from here.
     } catch (err) {
       console.error(err);
-      otpError.textContent = 'Galat OTP (' + (err.code || err.message) + ').';
+      otpError.textContent = 'Incorrect OTP (' + (err.code || err.message) + ').';
       otpError.classList.add('show');
       verifyOtpBtn.disabled = false;
       verifyOtpBtn.textContent = 'Verify & Continue';
@@ -518,18 +518,18 @@
     const notes = document.getElementById('s-notes').value.trim();
 
     if (!name || !city || !idNumber) {
-      signupError.textContent = 'Naam, city aur ID number zaroori hain.';
+      signupError.textContent = 'Name, city, and ID number are required.';
       signupError.classList.add('show');
       return;
     }
     if (!email || !email.includes('@')) {
-      signupError.textContent = 'Sahi email daalein.';
+      signupError.textContent = 'Enter a valid email.';
       signupError.classList.add('show');
       return;
     }
 
     if (!document.getElementById('s-commission-ack').checked) {
-      signupError.textContent = '20% commission wale checkbox ko confirm karein.';
+      signupError.textContent = 'Please confirm the 20% commission checkbox.';
       signupError.classList.add('show');
       return;
     }
@@ -561,7 +561,7 @@
       await loadDashboard(pendingUser);
     } catch (err) {
       console.error(err);
-      signupError.textContent = 'Kuch gadbad ho gayi (' + (err.code || err.message) + ').';
+      signupError.textContent = 'Something went wrong (' + (err.code || err.message) + ').';
       signupError.classList.add('show');
       saveSignupBtn.disabled = false;
       saveSignupBtn.textContent = 'Submit for Verification';
@@ -1006,7 +1006,7 @@
       const label = field === 'emergencyContact' ? 'Emergency contact number'
         : field === 'gender' ? 'Gender (Male / Female / Other)'
         : field.charAt(0).toUpperCase() + field.slice(1);
-      const value = prompt(label + ' likhein:', currentEngineerProfile[field] || '');
+      const value = prompt('Enter ' + label + ':', currentEngineerProfile[field] || '');
       if (value === null) return;
       const trimmed = value.trim();
       if (!trimmed) return;
@@ -1033,7 +1033,7 @@
       await saveProfileField('photoURL', url);
     } catch (err) {
       console.error('photo upload failed', err);
-      alert('Photo upload nahi ho paya (' + (err.code || err.message) + ').');
+      alert('Photo upload failed (' + (err.code || err.message) + ').');
     }
   });
 </script>

@@ -191,16 +191,21 @@ function buildStatusCardHTML(data, mapContainerId){
          <div class="cptr-chat-engineer-name">🧑‍🔧 ${esc(data.assignedEngineer)}</div>
          ${data.assignedEngineerPhone ? `<a class="cptr-chat-engineer-call" href="tel:${esc(data.assignedEngineerPhone)}">📞 Call Engineer</a>` : ''}
        </div>`
-    : `<div class="cptr-chat-engineer cptr-chat-engineer--pending">Engineer jald hi assign kiya jayega.</div>`;
+    : `<div class="cptr-chat-engineer cptr-chat-engineer--pending">An engineer will be assigned shortly.</div>`;
 
   const showLiveMap = (data.status === 'on_the_way' || data.status === 'in_progress') && mapContainerId;
   const mapHTML = showLiveMap ? `<div class="cptr-live-map" id="${esc(mapContainerId)}"></div>` : '';
 
-  const finalBillHTML = (data.finalBillItems && data.finalBillItems.length)
+  const hasFinalBill = data.finalBillItems && data.finalBillItems.length;
+  const showInvoice = hasFinalBill || data.status === 'completed';
+  const invoiceItems = hasFinalBill ? data.finalBillItems : (data.addOns || []);
+  const invoiceTotal = hasFinalBill ? (data.finalBillTotal || 0) : (data.totalEstimate || data.labourCharge || 0);
+  const finalBillHTML = showInvoice
     ? `<div class="cptr-final-bill">
-         <div class="cptr-final-bill-title">💰 Final Bill</div>
-         ${data.finalBillItems.map(i => `<div class="cptr-final-bill-row"><span>${esc(i.name)}</span><span>₹${Number(i.price).toLocaleString('en-IN')}</span></div>`).join('')}
-         <div class="cptr-final-bill-total"><span>Total</span><span>₹${Number(data.finalBillTotal || 0).toLocaleString('en-IN')}</span></div>
+         <div class="cptr-final-bill-title">💰 ${data.status === 'completed' ? 'Invoice' : 'Final Bill'}</div>
+         ${invoiceItems.map(i => `<div class="cptr-final-bill-row"><span>${esc(i.name)}${i.qty ? ' x' + i.qty : ''}</span><span>₹${(i.price * (i.qty || 1)).toLocaleString('en-IN')}</span></div>`).join('')}
+         ${(!hasFinalBill && data.labourCharge) ? `<div class="cptr-final-bill-row"><span>Visiting &amp; Labour Charge</span><span>₹${Number(data.labourCharge).toLocaleString('en-IN')}</span></div>` : ''}
+         <div class="cptr-final-bill-total"><span>Total</span><span>₹${Number(invoiceTotal).toLocaleString('en-IN')}</span></div>
        </div>`
     : '';
 
@@ -215,7 +220,7 @@ function buildStatusCardHTML(data, mapContainerId){
 }
 
 function buildBookingListHTML(numbers){
-  return `Aapke number se <b>${numbers.length}</b> bookings mili. Kaunsi dekhni hai?
+  return `Found <b>${numbers.length}</b> bookings under your number. Which one would you like to see?
     <div class="cptr-chat-quick">${numbers.map(n => `<button class="cptr-chat-chip" data-booking="${esc(n)}">${esc(n)}</button>`).join('')}</div>`;
 }
 
@@ -270,7 +275,7 @@ function watchBooking(bookingNumber){
 
     if (first || data.status !== lastStatus) {
       if (!first) {
-        addBotHTML(`🔔 <b>Update:</b> ${esc(data.bookingNumber)} ka status ab hai — <b>${esc(statusLabel(data.status))}</b>`);
+        addBotHTML(`🔔 <b>Update:</b> ${esc(data.bookingNumber)}'s status is now — <b>${esc(statusLabel(data.status))}</b>`);
       }
       liveMap = null; // fresh card = fresh map container, re-init on next update
       liveMapContainerId = 'cptr-map-' + Math.random().toString(36).slice(2);
@@ -282,32 +287,32 @@ function watchBooking(bookingNumber){
     updateLiveMap(data);
   }, (err) => {
     console.error('Compoter chatbot: booking watch failed', err);
-    addBotText('Live update abhi nahi mil paa raha. Thodi der baad dobara try karein.');
+    addBotText('Unable to get a live update right now. Please try again in a bit.');
   });
 }
 
 async function lookupByBookingNumber(bookingNumber){
-  addBotText('Dhoondh raha hoon...');
+  addBotText('Looking it up...');
   try {
     const snap = await getDoc(doc(db, 'bookings', bookingNumber));
     if (!snap.exists()) {
-      addBotText(`"${bookingNumber}" naam ki koi booking nahi mili. Booking ID dobara check karein.`);
+      addBotText(`No booking found with ID "${bookingNumber}". Please double-check your Booking ID.`);
       return;
     }
     watchBooking(bookingNumber);
   } catch (e) {
     console.error(e);
-    addBotText('Kuch gadbad ho gayi. Thodi der baad try karein ya WhatsApp par sampark karein.');
+    addBotText('Something went wrong. Please try again in a bit or contact us on WhatsApp.');
   }
 }
 
 async function lookupByPhone(phoneKey){
-  addBotText('Dhoondh raha hoon...');
+  addBotText('Looking it up...');
   try {
     const idxSnap = await getDoc(doc(db, 'bookingsByPhone', phoneKey));
     const numbers = idxSnap.exists() ? (idxSnap.data().bookingNumbers || []) : [];
     if (!numbers.length) {
-      addBotText('Is phone number se koi booking nahi mili. Booking ID try karein ya WhatsApp par sampark karein.');
+      addBotText('No booking found for this phone number. Try your Booking ID or contact us on WhatsApp.');
       return;
     }
     if (numbers.length === 1) {
@@ -317,7 +322,7 @@ async function lookupByPhone(phoneKey){
     addBotHTML(buildBookingListHTML(numbers));
   } catch (e) {
     console.error(e);
-    addBotText('Kuch gadbad ho gayi. Thodi der baad try karein.');
+    addBotText('Something went wrong. Please try again in a bit.');
   }
 }
 
@@ -338,13 +343,13 @@ async function handleUserInput(raw){
     return;
   }
 
-  addBotText('Mujhe samajh nahi aaya 🤔 Kripya apna Booking ID (jaise BK-5001) ya 10-digit phone number bhejein.');
+  addBotText("I didn't quite get that 🤔 Please send your Booking ID (e.g. BK-5001) or your 10-digit phone number.");
 }
 
 function greet(){
   if (greeted) return;
   greeted = true;
-  addBotText('Hi! 👋 Main Compoter Assistant hoon. Apni booking ka live status jaanne ke liye apna Booking ID (jaise BK-5001) ya registered phone number bhejein.');
+  addBotText("Hi! 👋 I'm the Compoter Assistant. To check your booking's live status, send your Booking ID (e.g. BK-5001) or your registered phone number.");
 }
 
 function injectWidget(){
@@ -359,7 +364,7 @@ function injectWidget(){
       </div>
       <div id="cptr-chat-messages" class="cptr-chat-messages"></div>
       <form id="cptr-chat-form" class="cptr-chat-form">
-        <input id="cptr-chat-input" type="text" placeholder="Booking ID ya Phone Number" autocomplete="off">
+        <input id="cptr-chat-input" type="text" placeholder="Booking ID or Phone Number" autocomplete="off">
         <button type="submit" aria-label="Send">➤</button>
       </form>
     </div>
